@@ -21,10 +21,12 @@ package ethdb
 import (
 	"bytes"
 	"errors"
-	"github.com/ledgerwatch/turbo-geth/common/dbutils"
+	"fmt"
 	"os"
 	"path"
 	"sync"
+
+	"github.com/ledgerwatch/turbo-geth/common/dbutils"
 
 	"github.com/ledgerwatch/turbo-geth/log"
 
@@ -610,6 +612,11 @@ func (db *BoltDatabase) Close() {
 			db.log.Error("Metrics collection failed", "err", err)
 		}
 		db.quitChan = nil
+	}
+	fmt.Printf("Write stats:\n")
+	stats := db.db.Stats()
+	for b, w := range stats.TxStats.WriteByBucket {
+		fmt.Printf("Bucket: %s, Writes: %d\n", b, w)
 	}
 	if err := db.db.Close(); err == nil {
 		db.log.Info("Database closed")

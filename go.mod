@@ -34,7 +34,7 @@ require (
 	github.com/karalabe/hid v0.0.0-20181128192157-d815e0c1a2e2
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/ledgerwatch/bolt v1.4.1
+	github.com/ledgerwatch/bolt v1.4.2-0.20190930223737-785531d6f33d
 	github.com/llgcode/draw2d v0.0.0-20180825133448-f52c8a71aff0
 	github.com/maruel/panicparse v0.0.0-20160720141634-ad661195ed0e // indirect
 	github.com/maruel/ut v1.0.0 // indirect
@@ -63,7 +63,7 @@ require (
 	github.com/wcharczuk/go-chart v2.0.1+incompatible
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
 	golang.org/x/net v0.0.0-20180112015858-5ccada7d0a7b
-	golang.org/x/sys v0.0.0-20180808154034-904bdc257025
+	golang.org/x/sys v0.0.0-20190927073244-c990c680b611
 	golang.org/x/text v0.0.0-20171227012246-e19ae1496984 // indirect
 	gopkg.in/check.v1 v1.0.0-20161208181325-20d25e280405
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce
