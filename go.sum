@@ -75,6 +75,8 @@ github.com/ledgerwatch/bolt v1.4.2-0.20190930214047-242f2e84178d h1:CXc2NcXrEi/w
 github.com/ledgerwatch/bolt v1.4.2-0.20190930214047-242f2e84178d/go.mod h1:N5ODe9aUsis79NxhdSRR39nlRQJORCyB/IDsfwuG+tE=
 github.com/ledgerwatch/bolt v1.4.2-0.20190930223737-785531d6f33d h1:7aigPcXE0KwbAvXvNUZs6ZZ5uR/l8X8qIiAr+EkTjmk=
 github.com/ledgerwatch/bolt v1.4.2-0.20190930223737-785531d6f33d/go.mod h1:N5ODe9aUsis79NxhdSRR39nlRQJORCyB/IDsfwuG+tE=
+github.com/ledgerwatch/bolt v1.4.2-0.20190930224809-5f38b245c5fc h1:6DXP+ylyuamRZID3frAIaGNGY2hq6bMnEL3UBxU55d4=
+github.com/ledgerwatch/bolt v1.4.2-0.20190930224809-5f38b245c5fc/go.mod h1:N5ODe9aUsis79NxhdSRR39nlRQJORCyB/IDsfwuG+tE=
 github.com/llgcode/draw2d v0.0.0-20180825133448-f52c8a71aff0 h1:2vp6ESimuT8pCuZHThVyV0hlfa9oPL06HnGCL9pbUgc=
 github.com/llgcode/draw2d v0.0.0-20180825133448-f52c8a71aff0/go.mod h1:mVa0dA29Db2S4LVqDYLlsePDzRJLDfdhVZiI15uY0FA=
 github.com/llgcode/ps v0.0.0-20150911083025-f1443b32eedb h1:61ndUreYSlWFeCY44JxDDkngVoI7/1MVhEl98Nm0KOk=
