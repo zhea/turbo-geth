@@ -34,7 +34,7 @@ require (
 	github.com/karalabe/hid v0.0.0-20181128192157-d815e0c1a2e2
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/ledgerwatch/bolt v1.4.2-0.20190930224809-5f38b245c5fc
+	github.com/ledgerwatch/bolt v1.4.2-0.20191001093605-ed2c1052f9c5
 	github.com/llgcode/draw2d v0.0.0-20180825133448-f52c8a71aff0
 	github.com/maruel/panicparse v0.0.0-20160720141634-ad661195ed0e // indirect
 	github.com/maruel/ut v1.0.0 // indirect
