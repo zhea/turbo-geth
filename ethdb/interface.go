@@ -68,4 +68,5 @@ type Mutation interface {
 	Commit() (uint64, error)
 	Rollback()
 	BatchSize() int
+	CacheReads(bucket []byte)
 }

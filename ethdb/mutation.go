@@ -2,14 +2,19 @@ package ethdb
 
 import (
 	"bytes"
+	"fmt"
+	"sync"
+
 	"github.com/ledgerwatch/turbo-geth/common"
 	"github.com/ledgerwatch/turbo-geth/common/dbutils"
 	"github.com/petar/GoLLRB/llrb"
-	"sync"
 )
 
 type mutation struct {
-	puts map[string]*llrb.LLRB // Map buckets to RB tree containing items
+	gets   map[string]*llrb.LLRB // Map buckets to RB tree containing items
+	puts   map[string]*llrb.LLRB // Map buckets to RB tree containing items
+	hits   map[string]int        // Cache hits over the lifetime of this mutation, per bucket
+	misses map[string]int        // Cache misses over the lifetime of this mutation, per bucket
 	//map[timestamp]map[hBucket]listOfChangedKeys
 	suffixkeys map[uint64]map[string][][]byte
 	mu         sync.RWMutex
@@ -21,18 +26,27 @@ func (m *mutation) getMem(bucket, key []byte) ([]byte, bool) {
 	defer m.mu.RUnlock()
 	if t, ok := m.puts[string(bucket)]; ok {
 		i := t.Get(&PutItem{key: key})
-		if i == nil {
-			return nil, false
-		}
-		if item, ok := i.(*PutItem); ok {
-			if item.value == nil {
-				return nil, true
+		if i != nil {
+			if item, ok := i.(*PutItem); ok {
+				if item.value != nil {
+					v := make([]byte, len(item.value))
+					copy(v, item.value)
+					return v, true
+				}
 			}
-			v := make([]byte, len(item.value))
-			copy(v, item.value)
-			return v, true
 		}
-		return nil, false
+	}
+	if t, ok := m.gets[string(bucket)]; ok {
+		i := t.Get(&PutItem{key: key})
+		if i != nil {
+			if item, ok := i.(*PutItem); ok {
+				if item.value != nil {
+					v := make([]byte, len(item.value))
+					copy(v, item.value)
+					return v, true
+				}
+			}
+		}
 	}
 	return nil, false
 }
@@ -40,13 +54,29 @@ func (m *mutation) getMem(bucket, key []byte) ([]byte, bool) {
 // Can only be called from the worker thread
 func (m *mutation) Get(bucket, key []byte) ([]byte, error) {
 	if value, ok := m.getMem(bucket, key); ok {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		m.hits[string(bucket)]++
 		if value == nil {
 			return nil, ErrKeyNotFound
 		}
 		return value, nil
 	}
 	if m.db != nil {
-		return m.db.Get(bucket, key)
+		value, err := m.db.Get(bucket, key)
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		m.misses[string(bucket)]++
+		if t, ok := m.gets[string(bucket)]; ok {
+			bb := make([]byte, len(bucket))
+			copy(bb, bucket)
+			k := make([]byte, len(key))
+			copy(k, key)
+			v := make([]byte, len(value))
+			copy(v, value)
+			t.ReplaceOrInsert(&PutItem{key: k, value: v})
+		}
+		return value, err
 	}
 	return nil, ErrKeyNotFound
 }
@@ -69,7 +99,8 @@ func (m *mutation) getNoLock(bucket, key []byte) ([]byte, error) {
 		}
 	}
 	if m.db != nil {
-		return m.db.Get(bucket, key)
+		v, err := m.db.Get(bucket, key)
+		return v, err
 	}
 	return nil, ErrKeyNotFound
 }
@@ -363,6 +394,9 @@ func (m *mutation) Commit() (uint64, error) {
 	if written, putErr = m.db.MultiPut(tuples...); putErr != nil {
 		return 0, putErr
 	}
+	for bucketStr := range m.gets {
+		m.gets[bucketStr] = llrb.New()
+	}
 	m.puts = make(map[string]*llrb.LLRB)
 	return written, nil
 }
@@ -371,6 +405,9 @@ func (m *mutation) Rollback() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.suffixkeys = make(map[uint64]map[string][][]byte)
+	for bucketStr := range m.gets {
+		m.gets[bucketStr] = llrb.New()
+	}
 	m.puts = make(map[string]*llrb.LLRB)
 }
 
@@ -399,12 +436,22 @@ func (m *mutation) Keys() ([][]byte, error) {
 
 func (m *mutation) Close() {
 	m.Rollback()
+	// Print out hits and misses
+	for bucketStr, hit := range m.hits {
+		fmt.Printf("Hits for %s: %d\n", bucketStr, hit)
+	}
+	for bucketStr, miss := range m.misses {
+		fmt.Printf("Misses for %s: %d\n", bucketStr, miss)
+	}
 }
 
 func (m *mutation) NewBatch() Mutation {
 	mm := &mutation{
 		db:         m,
+		gets:       make(map[string]*llrb.LLRB),
 		puts:       make(map[string]*llrb.LLRB),
+		hits:       make(map[string]int),
+		misses:     make(map[string]int),
 		suffixkeys: make(map[uint64]map[string][][]byte),
 	}
 	return mm
@@ -412,4 +459,11 @@ func (m *mutation) NewBatch() Mutation {
 
 func (m *mutation) MemCopy() Database {
 	panic("Not implemented")
+}
+
+func (m *mutation) CacheReads(bucket []byte) {
+	bucketStr := string(bucket)
+	if _, ok := m.gets[bucketStr]; !ok {
+		m.gets[bucketStr] = llrb.New()
+	}
 }

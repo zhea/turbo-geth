@@ -661,7 +661,10 @@ func (a *PutItem) Less(b llrb.Item) bool {
 func (db *BoltDatabase) NewBatch() Mutation {
 	m := &mutation{
 		db:         db,
+		gets:       make(map[string]*llrb.LLRB),
 		puts:       make(map[string]*llrb.LLRB),
+		hits:       make(map[string]int),
+		misses:     make(map[string]int),
 		suffixkeys: make(map[uint64]map[string][][]byte),
 	}
 	return m

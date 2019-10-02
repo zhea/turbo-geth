@@ -31,6 +31,7 @@ import (
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/ledgerwatch/turbo-geth/common"
+	"github.com/ledgerwatch/turbo-geth/common/dbutils"
 	"github.com/ledgerwatch/turbo-geth/common/mclock"
 	"github.com/ledgerwatch/turbo-geth/common/prque"
 	"github.com/ledgerwatch/turbo-geth/consensus"
@@ -170,6 +171,7 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 	futureBlocks, _ := lru.New(maxFutureBlocks)
 	badBlocks, _ := lru.New(badBlockLimit)
 	cdb := db.NewBatch()
+	cdb.CacheReads(dbutils.PreimagePrefix)
 
 	bc := &BlockChain{
 		chainConfig:   chainConfig,
@@ -755,6 +757,7 @@ func (bc *BlockChain) Stop() {
 	atomic.StoreInt32(&bc.procInterrupt, 1)
 
 	bc.wg.Wait()
+	bc.db.Close()
 	log.Info("Blockchain manager stopped")
 }
 
