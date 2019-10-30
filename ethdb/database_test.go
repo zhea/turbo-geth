@@ -64,7 +64,7 @@ func newTestBadgerDB() (*BadgerDatabase, func()) {
 var bucket = []byte("TestBucket")
 var testValues = []string{"a", "1251", "\x00123\x00"}
 
-func TestDB_PutGet(t *testing.T) {
+func TestBoltDB_PutGet(t *testing.T) {
 	db, remove := newTestBoltDB()
 	defer remove()
 	testPutGet(db, t)
@@ -169,7 +169,7 @@ func testPutGet(db SimpleDatabase, t *testing.T) {
 	}
 }
 
-func TestLDB_ParallelPutGet(t *testing.T) {
+func TestBoltDB_ParallelPutGet(t *testing.T) {
 	db, remove := newTestBoltDB()
 	defer remove()
 	testParallelPutGet(db, t)
@@ -179,7 +179,12 @@ func TestMemoryDB_ParallelPutGet(t *testing.T) {
 	testParallelPutGet(NewMemDatabase(), t)
 }
 
-func testParallelPutGet(db Database, t *testing.T) {
+func TestBadgerDB_ParallelPutGet(t *testing.T) {
+	db, remove := newTestBadgerDB()
+	defer remove()
+	testParallelPutGet(db, t)
+}
+func testParallelPutGet(db SimpleDatabase, t *testing.T) {
 	const n = 8
 	var pending sync.WaitGroup
 
