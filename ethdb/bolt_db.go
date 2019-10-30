@@ -37,17 +37,19 @@ var ErrKeyNotFound = errors.New("boltdb: key not found in range")
 
 const HeapSize = 512 * 1024 * 1024
 
+// BoltDatabase is a wrapper over BoltDb,
+// compatible with the Database interface.
 type BoltDatabase struct {
-	fn string   // filename for reporting
 	db *bolt.DB // BoltDB instance
 
+	// TODO [Andrew] Do we need this stuff?
 	quitLock sync.Mutex      // Mutex protecting the quit channel access
 	quitChan chan chan error // Quit channel to stop the metrics collection before closing the database
 
 	log log.Logger // Contextual logger tracking the database path
 }
 
-// NewBoltDatabase returns a BoltDB wrapped object.
+// NewBoltDatabase returns a BoltDB wrapper.
 func NewBoltDatabase(file string) (*BoltDatabase, error) {
 	logger := log.New("database", file)
 
@@ -62,15 +64,9 @@ func NewBoltDatabase(file string) (*BoltDatabase, error) {
 		return nil, err
 	}
 	return &BoltDatabase{
-		fn:  file,
 		db:  db,
 		log: logger,
 	}, nil
-}
-
-// Path returns the path to the database directory.
-func (db *BoltDatabase) Path() string {
-	return db.fn
 }
 
 // Put puts the given key / value to the queue

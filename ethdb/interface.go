@@ -20,14 +20,17 @@ package ethdb
 // The value was determined empirically.
 const IdealBatchSize = 100 * 1024
 
-// Putter wraps the database write operation supported by both batches and regular databases.
+// Putter wraps the database write operations.
 type Putter interface {
+	// Put inserts or updates a single entry.
 	Put(bucket, key, value []byte) error
 	PutS(hBucket, key, value []byte, timestamp uint64) error
 	DeleteTimestamp(timestamp uint64) error
 }
 
+// Getter wraps the database read operations.
 type Getter interface {
+	// Get returns a single value.
 	Get(bucket, key []byte) ([]byte, error)
 	GetS(hBucket, key []byte, timestamp uint64) ([]byte, error)
 	GetAsOf(bucket, hBucket, key []byte, timestamp uint64) ([]byte, error)
@@ -38,8 +41,9 @@ type Getter interface {
 	MultiWalkAsOf(bucket, hBucket []byte, startkeys [][]byte, fixedbits []uint, timestamp uint64, walker func(int, []byte, []byte) (bool, error)) error
 }
 
-// Deleter wraps the database delete operation supported by both batches and regular databases.
+// Deleter wraps the database delete operations.
 type Deleter interface {
+	// Delete removes a single entry.
 	Delete(bucket, key []byte) error
 }
 
@@ -55,6 +59,14 @@ type Database interface {
 	Size() int
 	Keys() ([][]byte, error)
 	MemCopy() Database
+}
+
+// SimpleDatabase is a minimalistic version of the Database interface.
+// TODO [Andrew] remove the interface.
+type SimpleDatabase interface {
+	Deleter
+	Put(bucket, key, value []byte) error
+	Get(bucket, key []byte) ([]byte, error)
 }
 
 // DbWithPendingMutations is an extended version of the Database,

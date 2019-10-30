@@ -29,7 +29,7 @@ import (
 	"testing"
 )
 
-func newTestDB() (*BoltDatabase, func()) {
+func newTestBoltDB() (*BoltDatabase, func()) {
 	dirname, err := ioutil.TempDir(os.TempDir(), "ethdb_test_")
 	if err != nil {
 		panic("failed to create test file: " + err.Error())
@@ -45,11 +45,27 @@ func newTestDB() (*BoltDatabase, func()) {
 	}
 }
 
+func newTestBadgerDB() (*BadgerDatabase, func()) {
+	dirname, err := ioutil.TempDir(os.TempDir(), "ethdb_test_")
+	if err != nil {
+		panic("failed to create test file: " + err.Error())
+	}
+	db, err := NewBadgerDatabase(path.Join(dirname, "badger_db"))
+	if err != nil {
+		panic("failed to create test database: " + err.Error())
+	}
+
+	return db, func() {
+		db.Close()
+		os.RemoveAll(dirname)
+	}
+}
+
 var bucket = []byte("TestBucket")
-var test_values = []string{"a", "1251", "\x00123\x00"}
+var testValues = []string{"a", "1251", "\x00123\x00"}
 
 func TestDB_PutGet(t *testing.T) {
-	db, remove := newTestDB()
+	db, remove := newTestBoltDB()
 	defer remove()
 	testPutGet(db, t)
 }
@@ -58,17 +74,23 @@ func TestMemoryDB_PutGet(t *testing.T) {
 	testPutGet(NewMemDatabase(), t)
 }
 
-func testPutGet(db Database, t *testing.T) {
+func TestBadgerDB_PutGet(t *testing.T) {
+	db, remove := newTestBadgerDB()
+	defer remove()
+	testPutGet(db, t)
+}
+
+func testPutGet(db SimpleDatabase, t *testing.T) {
 	t.Parallel()
 
-	for _, k := range test_values {
+	for _, k := range testValues {
 		err := db.Put(bucket, []byte(k), nil)
 		if err != nil {
 			t.Fatalf("put failed: %v", err)
 		}
 	}
 
-	for _, k := range test_values {
+	for _, k := range testValues {
 		data, err := db.Get(bucket, []byte(k))
 		if err != nil {
 			t.Fatalf("get failed: %v", err)
@@ -83,14 +105,14 @@ func testPutGet(db Database, t *testing.T) {
 		t.Fatalf("expect to return a not found error")
 	}
 
-	for _, v := range test_values {
+	for _, v := range testValues {
 		err := db.Put(bucket, []byte(v), []byte(v))
 		if err != nil {
 			t.Fatalf("put failed: %v", err)
 		}
 	}
 
-	for _, v := range test_values {
+	for _, v := range testValues {
 		data, err := db.Get(bucket, []byte(v))
 		if err != nil {
 			t.Fatalf("get failed: %v", err)
@@ -100,14 +122,14 @@ func testPutGet(db Database, t *testing.T) {
 		}
 	}
 
-	for _, v := range test_values {
+	for _, v := range testValues {
 		err := db.Put(bucket, []byte(v), []byte("?"))
 		if err != nil {
 			t.Fatalf("put override failed: %v", err)
 		}
 	}
 
-	for _, v := range test_values {
+	for _, v := range testValues {
 		data, err := db.Get(bucket, []byte(v))
 		if err != nil {
 			t.Fatalf("get failed: %v", err)
@@ -117,7 +139,7 @@ func testPutGet(db Database, t *testing.T) {
 		}
 	}
 
-	for _, v := range test_values {
+	for _, v := range testValues {
 		orig, err := db.Get(bucket, []byte(v))
 		if err != nil {
 			t.Fatalf("get failed: %v", err)
@@ -132,14 +154,14 @@ func testPutGet(db Database, t *testing.T) {
 		}
 	}
 
-	for _, v := range test_values {
+	for _, v := range testValues {
 		err := db.Delete(bucket, []byte(v))
 		if err != nil {
 			t.Fatalf("delete %q failed: %v", v, err)
 		}
 	}
 
-	for _, v := range test_values {
+	for _, v := range testValues {
 		_, err := db.Get(bucket, []byte(v))
 		if err == nil {
 			t.Fatalf("got deleted value %q", v)
@@ -148,7 +170,7 @@ func testPutGet(db Database, t *testing.T) {
 }
 
 func TestLDB_ParallelPutGet(t *testing.T) {
-	db, remove := newTestDB()
+	db, remove := newTestBoltDB()
 	defer remove()
 	testParallelPutGet(db, t)
 }
