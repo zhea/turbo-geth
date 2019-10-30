@@ -172,19 +172,19 @@ func testPutGet(db SimpleDatabase, t *testing.T) {
 func TestBoltDB_ParallelPutGet(t *testing.T) {
 	db, remove := newTestBoltDB()
 	defer remove()
-	testParallelPutGet(db, t)
+	testParallelPutGet(db)
 }
 
 func TestMemoryDB_ParallelPutGet(t *testing.T) {
-	testParallelPutGet(NewMemDatabase(), t)
+	testParallelPutGet(NewMemDatabase())
 }
 
 func TestBadgerDB_ParallelPutGet(t *testing.T) {
 	db, remove := newTestBadgerDB()
 	defer remove()
-	testParallelPutGet(db, t)
+	testParallelPutGet(db)
 }
-func testParallelPutGet(db SimpleDatabase, t *testing.T) {
+func testParallelPutGet(db SimpleDatabase) {
 	const n = 8
 	var pending sync.WaitGroup
 
