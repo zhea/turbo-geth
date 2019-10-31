@@ -23,7 +23,6 @@ import (
 	"errors"
 	"os"
 	"path"
-	"sync"
 
 	"github.com/ledgerwatch/turbo-geth/common/dbutils"
 	"github.com/ledgerwatch/turbo-geth/log"
@@ -40,12 +39,7 @@ const HeapSize = 512 * 1024 * 1024
 // BoltDatabase is a wrapper over BoltDb,
 // compatible with the Database interface.
 type BoltDatabase struct {
-	db *bolt.DB // BoltDB instance
-
-	// TODO [Andrew] Do we need this stuff?
-	quitLock sync.Mutex      // Mutex protecting the quit channel access
-	quitChan chan chan error // Quit channel to stop the metrics collection before closing the database
-
+	db  *bolt.DB   // BoltDB instance
 	log log.Logger // Contextual logger tracking the database path
 }
 
@@ -603,18 +597,6 @@ func (db *BoltDatabase) DeleteBucket(bucket []byte) error {
 }
 
 func (db *BoltDatabase) Close() {
-	// Stop the metrics collection to avoid internal database races
-	db.quitLock.Lock()
-	defer db.quitLock.Unlock()
-
-	if db.quitChan != nil {
-		errc := make(chan error)
-		db.quitChan <- errc
-		if err := <-errc; err != nil {
-			db.log.Error("Metrics collection failed", "err", err)
-		}
-		db.quitChan = nil
-	}
 	if err := db.db.Close(); err == nil {
 		db.log.Info("Database closed")
 	} else {
