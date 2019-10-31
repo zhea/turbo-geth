@@ -86,26 +86,40 @@ func (db *BoltDatabase) Put(bucket, key []byte, value []byte) error {
 }
 
 // Put puts the given key / value to the queue
-func (db *BoltDatabase) PutS(hBucket, key, value []byte, timestamp uint64) error {
+func (db *BoltDatabase) PutS(hBucket, key, value []byte, timestamp uint64, noHistory bool) error {
 	composite, suffix := dbutils.CompositeKeySuffix(key, timestamp)
 	suffixkey := make([]byte, len(suffix)+len(hBucket))
 	copy(suffixkey, suffix)
 	copy(suffixkey[len(suffix):], hBucket)
 	err := db.db.Update(func(tx *bolt.Tx) error {
-		hb, err := tx.CreateBucketIfNotExists(hBucket, true)
-		if err != nil {
-			return err
+		if !noHistory {
+			hb, err := tx.CreateBucketIfNotExists(hBucket, true)
+			if err != nil {
+				return err
+			}
+			if err = hb.Put(composite, value); err != nil {
+				return err
+			}
 		}
-		if err = hb.Put(composite, value); err != nil {
-			return err
-		}
-		sb, err := tx.CreateBucketIfNotExists(dbutils.SuffixBucket, true)
+
+		sb, err := tx.CreateBucketIfNotExists(dbutils.ChangeSetBucket, true)
 		if err != nil {
 			return err
 		}
 
 		dat, _ := sb.Get(suffixkey)
-		dat = dbutils.ToSuffix(dat).Add(key)
+		sh, err := dbutils.Decode(dat)
+		if err != nil {
+			log.Error("PutS Decode suffix err", "err", err)
+			return err
+		}
+		sh = sh.Add(key, value)
+		dat, err = dbutils.Encode(sh)
+		if err != nil {
+			log.Error("PutS Decode suffix err", "err", err)
+			return err
+		}
+
 		return sb.Put(suffixkey, dat)
 	})
 	return err
@@ -545,7 +559,7 @@ func (db *BoltDatabase) Delete(bucket, key []byte) error {
 func (db *BoltDatabase) DeleteTimestamp(timestamp uint64) error {
 	suffix := dbutils.EncodeTimestamp(timestamp)
 	err := db.db.Update(func(tx *bolt.Tx) error {
-		sb := tx.Bucket(dbutils.SuffixBucket)
+		sb := tx.Bucket(dbutils.ChangeSetBucket)
 		if sb == nil {
 			return nil
 		}
@@ -556,8 +570,11 @@ func (db *BoltDatabase) DeleteTimestamp(timestamp uint64) error {
 			if hb == nil {
 				return nil
 			}
-			changedAccounts := dbutils.ToSuffix(v)
-			err := changedAccounts.Walk(func(kk []byte) error {
+			changedAccounts, err := dbutils.Decode(v)
+			if err != nil {
+				return err
+			}
+			err = changedAccounts.Walk(func(kk, _ []byte) error {
 				kk = append(kk, suffix...)
 				if err := hb.Delete(kk); err != nil {
 					return err
@@ -637,7 +654,7 @@ func (db *BoltDatabase) NewBatch() DbWithPendingMutations {
 	m := &mutation{
 		db:         db,
 		puts:       make(map[string]*llrb.LLRB),
-		suffixkeys: make(map[uint64]map[string][][]byte),
+		suffixkeys: make(map[uint64]map[string][]dbutils.Change),
 	}
 	return m
 }
