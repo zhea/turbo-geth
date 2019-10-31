@@ -24,7 +24,7 @@ const IdealBatchSize = 100 * 1024
 type Putter interface {
 	// Put inserts or updates a single entry.
 	Put(bucket, key, value []byte) error
-	PutS(hBucket, key, value []byte, timestamp uint64) error
+	PutS(hBucket, key, value []byte, timestamp uint64, noHistory bool) error
 	DeleteTimestamp(timestamp uint64) error
 }
 
