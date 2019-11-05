@@ -19,6 +19,7 @@ package ethdb
 import (
 	"github.com/dgraph-io/badger"
 
+	"github.com/ledgerwatch/turbo-geth/common/dbutils"
 	"github.com/ledgerwatch/turbo-geth/log"
 )
 
@@ -92,6 +93,56 @@ func (db *BadgerDatabase) Get(bucket, key []byte) ([]byte, error) {
 		return err
 	})
 	return val, err
+}
+
+// PutS adds a new entry to the historical buckets:
+// hBucket (unless changeSetBucketOnly) and ChangeSet.
+func (db *BadgerDatabase) PutS(hBucket, key, value []byte, timestamp uint64, changeSetBucketOnly bool) error {
+	composite, suffix := dbutils.CompositeKeySuffix(key, timestamp)
+	suffixkey := make([]byte, len(suffix)+len(hBucket))
+	copy(suffixkey, suffix)
+	copy(suffixkey[len(suffix):], hBucket)
+
+	hKey := bucketKey(hBucket, composite)
+	changeSetKey := bucketKey(dbutils.ChangeSetBucket, suffixkey)
+
+	err := db.db.Update(func(tx *badger.Txn) error {
+		if !changeSetBucketOnly {
+			if err := tx.Set(hKey, value); err != nil {
+				return err
+			}
+		}
+
+		changeSetItem, err := tx.Get(changeSetKey)
+		if err != nil && err != badger.ErrKeyNotFound {
+			return err
+		}
+
+		var sh dbutils.ChangeSet
+		if err == nil {
+			err = changeSetItem.Value(func(val []byte) error {
+				sh, err = dbutils.Decode(val)
+				if err != nil {
+					log.Error("PutS Decode suffix err", "err", err)
+					return err
+				}
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		sh = sh.Add(key, value)
+		dat, err := dbutils.Encode(sh)
+		if err != nil {
+			log.Error("PutS Decode suffix err", "err", err)
+			return err
+		}
+
+		return tx.Set(changeSetKey, dat)
+	})
+	return err
 }
 
 // TODO [Andrew] implement the full Database interface
