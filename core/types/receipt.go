@@ -283,12 +283,8 @@ type Receipts []*Receipt
 func (r Receipts) Len() int { return len(r) }
 
 // GetRlp returns the RLP encoding of one receipt from the list.
-func (r Receipts) GetRlp(i int) []byte {
-	bytes, err := rlp.EncodeToBytes(r[i])
-	if err != nil {
-		panic(err)
-	}
-	return bytes
+func (r Receipts) GetRaw(i int) interface{} {
+	return r[i]
 }
 
 // DeriveFields fills the receipts with their computed fields based on consensus

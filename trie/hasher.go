@@ -256,7 +256,9 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			pos += len(compactKey)
 		}
 		// Encode value
-		if vn, ok := n.Val.(valueNode); ok {
+		// TODO: FIXME!
+		if vnO, ok := n.Val.(valueNode); ok {
+			vn := vnO.Rlp()
 			if len(vn) == 1 && vn[0] < 128 {
 				buffer[pos] = vn[0]
 				pos++
@@ -375,7 +377,7 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			enc = encodedAccount.Bytes()
 			pool.PutBuffer(encodedAccount)
 		case valueNode:
-			enc = n
+			enc = n.Rlp()
 		case nil:
 		//	skip
 		default:
@@ -396,16 +398,18 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 		return finishRLP(buffer, pos)
 
 	case valueNode:
-		if len(n) == 1 && n[0] < 128 {
-			buffer[pos] = n[0]
+		// FIXME: fix stuff
+		nv := n.Rlp()
+		if len(nv) == 1 && nv[0] < 128 {
+			buffer[pos] = nv[0]
 			pos++
 		} else {
 			if h.encodeToBytes {
 				// Wrapping into another byte array
-				pos = generateByteArrayLen(buffer, pos, len(n))
+				pos = generateByteArrayLen(buffer, pos, len(nv))
 			}
-			copy(buffer[pos:], n)
-			pos += len(n)
+			copy(buffer[pos:], nv)
+			pos += len(nv)
 		}
 		return buffer[4:pos]
 

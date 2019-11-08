@@ -127,12 +127,12 @@ func visualNode(nd node, hex []byte, w io.Writer, highlights [][]byte, opts *Vis
 				leaves[string(hex)] = struct{}{}
 				var valStr string
 				if opts.ValHex {
-					valStr = fmt.Sprintf("%x", []byte(v))
+					valStr = fmt.Sprintf("%x", v.Rlp())
 				} else {
-					valStr = string(v)
+					valStr = fmt.Sprint(v.value)
 				}
 				if opts.ValCompressed && len(valStr) > 10 {
-					valStr = fmt.Sprintf("%x..%x", []byte(v)[:2], []byte(v)[len(v)-2:])
+					valStr = fmt.Sprintf("%x..%x", v.Rlp()[:2], []byte(v.Rlp())[len(v.Rlp())-2:])
 				}
 				visual.Circle(w, fmt.Sprintf("e_%x", concat(hex, n.Key...)), valStr, false)
 				fmt.Fprintf(w,

@@ -163,6 +163,10 @@ type BytesTape interface {
 	Next() ([]byte, error)
 }
 
+type AnyValueTape interface {
+	Next() (interface{}, error)
+}
+
 // Uint64Tape is an abstraction for an input tape that allows reading unsigned 64-bit integers sequentially
 // To be used for nonces of the accounts
 type Uint64Tape interface {
@@ -189,13 +193,13 @@ const hashStackStride = common.HashLength + 1 // + 1 byte for RLP encoding
 // is comprised of
 // DESCRIBED: docs/programmers_guide/guide.md#separation-of-keys-and-the-structure
 type HashBuilder struct {
-	keyTape     BytesTape  // the source of key sequence
-	valueTape   BytesTape  // the source of values (for values that are not accounts or contracts)
-	nonceTape   Uint64Tape // the source of nonces for accounts and contracts (field 0)
-	balanceTape BigIntTape // the source of balances for accounts and contracts (field 1)
-	sSizeTape   Uint64Tape // the source of storage sizes for contracts (field 4)
-	hashTape    HashTape   // the source of hashes
-	codeTape    BytesTape  // the source of bytecodes
+	keyTape     BytesTape    // the source of key sequence
+	valueTape   AnyValueTape // the source of values (for values that are not accounts or contracts)
+	nonceTape   Uint64Tape   // the source of nonces for accounts and contracts (field 0)
+	balanceTape BigIntTape   // the source of balances for accounts and contracts (field 1)
+	sSizeTape   Uint64Tape   // the source of storage sizes for contracts (field 4)
+	hashTape    HashTape     // the source of hashes
+	codeTape    BytesTape    // the source of bytecodes
 
 	hashStack []byte           // Stack of sub-slices, each 33 bytes each, containing RLP encodings of node hashes (or of nodes themselves, if shorter than 32 bytes)
 	nodeStack []node           // Stack of nodes
@@ -216,7 +220,7 @@ func (hb *HashBuilder) SetKeyTape(keyTape BytesTape) {
 }
 
 // SetValueTape sets the value tape to be used by this builder (opcodes leaf and leafHash)
-func (hb *HashBuilder) SetValueTape(valueTape BytesTape) {
+func (hb *HashBuilder) SetValueTape(valueTape AnyValueTape) {
 	hb.valueTape = valueTape
 }
 
@@ -262,9 +266,15 @@ func (hb *HashBuilder) leaf(length int) error {
 	if err != nil {
 		return err
 	}
-	s := &shortNode{Key: common.CopyBytes(key), Val: valueNode(common.CopyBytes(val))}
+	s := &shortNode{Key: common.CopyBytes(key), Val: valueNode{val}}
 	hb.nodeStack = append(hb.nodeStack, s)
-	return hb.leafHashWithKeyVal(key, val)
+
+	// FIXME: get rid of it
+	encodedVal, err := rlp.EncodeToBytes(val)
+	if err != nil {
+		return err
+	}
+	return hb.leafHashWithKeyVal(key, encodedVal)
 }
 
 // To be called internally
@@ -375,7 +385,13 @@ func (hb *HashBuilder) leafHash(length int) error {
 	if err != nil {
 		return err
 	}
-	return hb.leafHashWithKeyVal(key, val)
+
+	// FIXME: get rid of it
+	encodedVal, err := rlp.EncodeToBytes(val)
+	if err != nil {
+		return err
+	}
+	return hb.leafHashWithKeyVal(key, encodedVal)
 }
 
 var EmptyCodeHash = crypto.Keccak256Hash(nil)

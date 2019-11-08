@@ -271,9 +271,8 @@ func (s Transactions) Len() int { return len(s) }
 func (s Transactions) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 // GetRlp implements Rlpable and returns the i'th element of s in rlp.
-func (s Transactions) GetRlp(i int) []byte {
-	enc, _ := rlp.EncodeToBytes(s[i])
-	return enc
+func (s Transactions) GetRlp(i int) interface{} {
+	return s[i]
 }
 
 // TxDifference returns a new set which is the difference between a and b.

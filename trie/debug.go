@@ -169,14 +169,14 @@ func loadHash(br *bufio.Reader) (hashNode, error) {
 func loadValue(br *bufio.Reader) (valueNode, error) {
 	valHex, err := br.ReadBytes(')')
 	if err != nil {
-		return nil, err
+		return nilValueNode, err
 	}
 	valHex = valHex[:len(valHex)-1]
 	val, err := hex.DecodeString(string(valHex))
 	if err != nil {
-		return nil, err
+		return nilValueNode, err
 	}
-	return valueNode(val), nil
+	return valueNode{val}, nil
 }
 
 func Load(r io.Reader) (*Trie, error) {
@@ -247,10 +247,10 @@ func (n hashNode) print(w io.Writer) {
 }
 
 func (n valueNode) fstring(ind string) string {
-	return fmt.Sprintf("%x ", []byte(n))
+	return fmt.Sprintf("%+v ", n)
 }
 func (n valueNode) print(w io.Writer) {
-	fmt.Fprintf(w, "v(%x)", []byte(n))
+	fmt.Fprintf(w, "v(%+v)", n)
 }
 
 func (an accountNode) fstring(string) string {
@@ -305,7 +305,7 @@ func printDiffSide(n node, w io.Writer, ind string, key string) {
 	case hashNode:
 		fmt.Fprintf(w, "hash(%x)", []byte(n))
 	case valueNode:
-		fmt.Fprintf(w, "value(%s %x)", key, []byte(n))
+		fmt.Fprintf(w, "value(%s %+v)", key, n)
 	case *accountNode:
 		fmt.Fprintf(w, "account(%s %x)", key, n)
 	}
@@ -315,7 +315,7 @@ func printDiff(n1, n2 node, w io.Writer, ind string, key string) {
 	if nv1, ok := n1.(valueNode); ok {
 		fmt.Fprintf(w, "value(")
 		if n, ok := n2.(valueNode); ok {
-			fmt.Fprintf(w, "%s %x/%x", key, []byte(nv1), []byte(n))
+			fmt.Fprintf(w, "%s %+v/%+v", key, nv1, n)
 		} else {
 			fmt.Fprintf(w, "/%T", n2)
 		}

@@ -53,7 +53,9 @@ type (
 		Val node
 	}
 	hashNode  []byte
-	valueNode []byte
+	valueNode struct {
+		value interface{}
+	}
 
 	accountNode struct {
 		accounts.Account
@@ -62,9 +64,17 @@ type (
 	}
 )
 
+func (n *valueNode) Rlp() []byte {
+	b, err := rlp.EncodeToBytes(n.value)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
 // nilValueNode is used when collapsing internal trie nodes for hashing, since
 // unset children need to serialize correctly.
-var nilValueNode = valueNode(nil)
+var nilValueNode = valueNode{nil}
 
 // EncodeRLP encodes a full node into the consensus RLP format.
 func (n *fullNode) EncodeRLP(w io.Writer) error {
@@ -87,7 +97,7 @@ func (n *duoNode) EncodeRLP(w io.Writer) error {
 	children[i2] = n.child2
 	for i := 0; i < 17; i++ {
 		if i != int(i1) && i != int(i2) {
-			children[i] = valueNode(nil)
+			children[i] = nilValueNode
 		}
 	}
 	return rlp.Encode(w, children)

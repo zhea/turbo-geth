@@ -18,7 +18,6 @@
 package trie
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 
@@ -140,7 +139,7 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, gotValue b
 	case nil:
 		return nil, true
 	case valueNode:
-		return n, true
+		return n.Rlp(), true
 	case *accountNode:
 		return t.get(n.storage, key, pos)
 	case *shortNode:
@@ -185,14 +184,14 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, gotValue b
 // The value bytes must not be modified by the caller while they are
 // stored in the trie.
 // DESCRIBED: docs/programmers_guide/guide.md#root
-func (t *Trie) Update(key, value []byte, blockNr uint64) {
+func (t *Trie) Update(key []byte, value interface{}, blockNr uint64) {
 	hex := keybytesToHex(key)
 
 	if t.root == nil {
-		newnode := &shortNode{Key: hex, Val: valueNode(value)}
+		newnode := &shortNode{Key: hex, Val: valueNode{value}}
 		t.root = newnode
 	} else {
-		_, t.root = t.insert(t.root, hex, 0, valueNode(value))
+		_, t.root = t.insert(t.root, hex, 0, valueNode{value})
 	}
 }
 
@@ -323,7 +322,7 @@ func (t *Trie) insert(origNode node, key []byte, pos int, value node) (updated b
 		origN, origNok := origNode.(valueNode)
 		vn, vnok := value.(valueNode)
 		if origNok && vnok {
-			updated = !bytes.Equal(origN, vn)
+			updated = origN.value != vn.value
 			return updated, vn
 		}
 		origAccN, origNok := origNode.(*accountNode)

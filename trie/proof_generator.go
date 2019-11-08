@@ -303,7 +303,7 @@ func (bwb *BlockWitnessBuilder) makeBlockWitness(
 	case nil:
 		return nil
 	case valueNode:
-		return bwb.supplyValue(n)
+		return bwb.supplyValue(n.Rlp())
 	case *shortNode:
 		h := n.Key
 		// Remove terminator

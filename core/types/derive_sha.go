@@ -24,7 +24,19 @@ import (
 
 type DerivableList interface {
 	Len() int
-	GetRlp(i int) []byte
+	GetRaw(i int) interface{}
+}
+
+type oneValueTape struct {
+	currentValue interface{}
+}
+
+func (t *oneValueTape) Set(v interface{}) {
+	t.currentValue = v
+}
+
+func (t *oneValueTape) Next() (interface{}, error) {
+	return t.currentValue, nil
 }
 
 func DeriveSha(list DerivableList) common.Hash {
@@ -35,7 +47,7 @@ func DeriveSha(list DerivableList) common.Hash {
 	prev := &trie.OneBytesTape{}
 	curr := &trie.OneBytesTape{}
 	succ := &trie.OneBytesTape{}
-	value := &trie.OneBytesTape{}
+	value := &oneValueTape{}
 
 	hb := trie.NewHashBuilder()
 
@@ -63,10 +75,10 @@ func DeriveSha(list DerivableList) common.Hash {
 			hexWriter.Commit()
 		}
 
-		value.Reset()
+		value.Set(nil)
 
 		if curr.Len() > 0 {
-			value.Write(list.GetRlp(i))
+			value.Set(list.GetRaw(i))
 			groups, _ = trie.GenStructStep(0, hashOnly, false, prev.Bytes(), curr.Bytes(), succ.Bytes(), hb, groups)
 		}
 	})
