@@ -17,12 +17,10 @@
 package trie
 
 import (
-	"bytes"
 	"fmt"
 	"hash"
 
 	"github.com/ledgerwatch/turbo-geth/common/pool"
-	"github.com/ledgerwatch/turbo-geth/rlp"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -433,15 +431,6 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 		panic("hashNode")
 	}
 	return nil
-}
-
-func EncodeAsValue(data []byte) ([]byte, error) {
-	tmp := new(bytes.Buffer)
-	err := rlp.Encode(tmp, valueNode(data))
-	if err != nil {
-		return nil, err
-	}
-	return tmp.Bytes(), nil
 }
 
 // store hashes the node n and if we have a storage layer specified, it writes

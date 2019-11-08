@@ -13,6 +13,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func encodeAsValue(data []byte) ([]byte, error) {
+	tmp := new(bytes.Buffer)
+	err := rlp.Encode(tmp, valueNode(data))
+	if err != nil {
+		return nil, err
+	}
+	return tmp.Bytes(), nil
+}
+
 func TestRebuild(t *testing.T) {
 	t.Skip("should be restored. skipped for turbo-geth")
 
@@ -47,7 +56,7 @@ func TestRebuild(t *testing.T) {
 		tr.PrintTrie()
 		root1 := tr.Root()
 		//fmt.Printf("Root1: %x\n", tr.Root())
-		v1, err = EncodeAsValue(v1)
+		v1, err = encodeAsValue(v1)
 		if err != nil {
 			t.Errorf("Could not encode value: %v", err)
 		}
