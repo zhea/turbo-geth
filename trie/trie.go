@@ -324,12 +324,7 @@ func (t *Trie) insert(origNode node, key []byte, pos int, value node) (updated b
 		vn, vnok := value.(valueNode)
 		if origNok && vnok {
 			updated = !bytes.Equal(origN, vn)
-			if updated {
-				newNode = value
-			} else {
-				newNode = vn
-			}
-			return updated, newNode
+			return updated, vn
 		}
 		origAccN, origNok := origNode.(*accountNode)
 		vAccN, vnok := value.(*accountNode)
