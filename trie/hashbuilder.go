@@ -348,11 +348,9 @@ func (hb *HashBuilder) accountLeafHashWithKey(key []byte, popped int) error {
 	valBuf := pool.GetBuffer(valLen)
 	defer pool.PutBuffer(valBuf)
 	hb.acc.EncodeForHashing(valBuf.B)
-	val := valBuf.B
+	val := RlpEncodedBytes(valBuf.B)
 
-	valEnc := rlphacks.RlpEncodedBytes(val)
-
-	totalLen := kp + kl + valEnc.DoubleRLPLen()
+	totalLen := kp + kl + val.DoubleRLPLen()
 	pt := rlphacks.GenerateStructLen(lenPrefix[:], totalLen)
 
 	// FIXME: extract copy-paste
@@ -387,7 +385,7 @@ func (hb *HashBuilder) accountLeafHashWithKey(key []byte, popped int) error {
 		}
 		ni += 2
 	}
-	if err := valEnc.ToDoubleRLP(writer); err != nil {
+	if err := val.ToDoubleRLP(writer); err != nil {
 		return err
 	}
 	if reader != nil {
