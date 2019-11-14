@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ledgerwatch/turbo-geth/common"
+	"github.com/ledgerwatch/turbo-geth/trie/rlphacks"
 )
 
 // BytesTape is an abstraction for an input tape that allows reading binary strings ([]byte) sequentially
@@ -60,7 +61,7 @@ func (t *RlpSerializableBytesTape) Next() (RlpSerializable, error) {
 		return nil, err
 	}
 
-	return RlpSerializableBytes(value), nil
+	return rlphacks.RlpSerializableBytes(value), nil
 }
 
 func NewRlpEncodedBytesTape(inner BytesTape) RlpSerializableTape {
@@ -77,5 +78,5 @@ func (t *RlpBytesTape) Next() (RlpSerializable, error) {
 		return nil, err
 	}
 
-	return RlpEncodedBytes(value), nil
+	return rlphacks.RlpEncodedBytes(value), nil
 }
