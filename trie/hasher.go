@@ -136,7 +136,7 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 	buffer := h.buffers[bufOffset:]
 	pos := 4
 
-	fmt.Printf("hashChildren for tree... %p -> %d\n", original, offset)
+	fmt.Printf("hashChildren for tree... %p -> %d\n", original, bufOffset)
 
 	switch n := original.(type) {
 	case *shortNode:
