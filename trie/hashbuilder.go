@@ -315,9 +315,8 @@ func (hb *HashBuilder) accountLeafHashWithKey(key []byte, popped int) error {
 	var hash [33]byte // RLP representation of hash (or un-hashes value)
 	// Compute the total length of binary representation
 	var keyPrefix [1]byte
-	var valPrefix [4]byte
 	var lenPrefix [4]byte
-	var kp, vp, kl, vl int
+	var kp, kl int
 	// Write key
 	var compactLen int
 	var ni int
@@ -348,7 +347,7 @@ func (hb *HashBuilder) accountLeafHashWithKey(key []byte, popped int) error {
 	valBuf := pool.GetBuffer(valLen)
 	defer pool.PutBuffer(valBuf)
 	hb.acc.EncodeForHashing(valBuf.B)
-	val := RlpEncodedBytes(valBuf.B)
+	val := rlphacks.RlpEncodedBytes(valBuf.B)
 
 	totalLen := kp + kl + val.DoubleRLPLen()
 	pt := rlphacks.GenerateStructLen(lenPrefix[:], totalLen)

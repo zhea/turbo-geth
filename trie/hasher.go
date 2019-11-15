@@ -23,6 +23,7 @@ import (
 
 	"github.com/ledgerwatch/turbo-geth/common/pool"
 	"github.com/ledgerwatch/turbo-geth/rlp"
+	"github.com/ledgerwatch/turbo-geth/trie/rlphacks"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -145,21 +146,27 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			copy(buffer[pos:], compactKey)
 			pos += len(compactKey)
 		}
+
 		// Encode value
 		if vn, ok := n.Val.(valueNode); ok {
-			if len(vn) == 1 && vn[0] < 128 {
-				buffer[pos] = vn[0]
-				pos++
+
+			bw := &ByteArrayWriter{}
+			bw.Setup(buffer, pos)
+
+			var val RlpSerializable
+
+			if h.valueNodesRlpEncoded {
+				val = rlphacks.RlpEncodedBytes(vn)
 			} else {
-				if h.valueNodesRlpEncoded {
-					pos = generateByteArrayLen(buffer, pos, len(vn))
-				} else {
-					// value node contains raw values
-					pos = generateByteArrayLenDouble(buffer, pos, len(vn))
-				}
-				copy(buffer[pos:], vn)
-				pos += len(vn)
+				val = rlphacks.RlpSerializableBytes(vn)
 			}
+
+			if err := val.ToDoubleRLP(bw); err != nil {
+				panic(err)
+			}
+
+			pos += val.DoubleRLPLen()
+
 		} else if ac, ok := n.Val.(*accountNode); ok {
 			// Hashing the storage trie if necessary
 			if ac.storage == nil {
@@ -168,10 +175,18 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 				h.hashInternal(ac.storage, true, ac.Root[:], bufOffset+pos)
 			}
 
-			encodingLen := ac.EncodingLengthForHashing()
-			pos = generateByteArrayLen(buffer, pos, int(encodingLen))
-			ac.EncodeForHashing(buffer[pos:])
-			pos += int(encodingLen)
+			encodedAccount := pool.GetBuffer(ac.EncodingLengthForHashing())
+			ac.EncodeForHashing(encodedAccount.B)
+			enc := rlphacks.RlpEncodedBytes(encodedAccount.Bytes())
+
+			bw := &ByteArrayWriter{}
+			bw.Setup(buffer, pos)
+
+			if err := enc.ToDoubleRLP(bw); err != nil {
+				panic(err)
+			}
+
+			pos += enc.DoubleRLPLen()
 		} else {
 			if n.Val == nil {
 				// empty byte array
@@ -257,54 +272,59 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 				}
 			}
 		}
-		var enc []byte
-		needsDoubleRlpEncoding := false
+		var enc RlpSerializable
 
 		switch n := n.Children[16].(type) {
 		case *accountNode:
 			encodedAccount := pool.GetBuffer(n.EncodingLengthForHashing())
 			n.EncodeForHashing(encodedAccount.B)
-			enc = encodedAccount.Bytes()
+			enc = rlphacks.RlpEncodedBytes(encodedAccount.Bytes())
 			pool.PutBuffer(encodedAccount)
 		case valueNode:
-			needsDoubleRlpEncoding = !h.valueNodesRlpEncoded
-			enc = n
+			if h.valueNodesRlpEncoded {
+				enc = rlphacks.RlpEncodedBytes(n)
+			} else {
+				enc = rlphacks.RlpSerializableBytes(n)
+			}
 		case nil:
 			//	skip
 		default:
 			//	skip
 		}
 
+		bw := &ByteArrayWriter{}
 		if enc == nil {
 			buffer[pos] = byte(128)
 			pos++
-		} else if len(enc) == 1 && enc[0] < 128 {
-			buffer[pos] = enc[0]
-			pos++
 		} else {
-			if needsDoubleRlpEncoding {
-				pos = generateByteArrayLenDouble(buffer, pos, len(enc))
-			} else {
-				pos = generateByteArrayLen(buffer, pos, len(enc))
+			bw.Setup(buffer, pos)
+
+			// FIXME: return error here
+			if err := enc.ToDoubleRLP(bw); err != nil {
+				panic(err)
 			}
-			copy(buffer[pos:], enc)
-			pos += len(enc)
+
+			pos += enc.DoubleRLPLen()
 		}
 		return finishRLP(buffer, pos)
 
 	case valueNode:
-		if len(n) == 1 && n[0] < 128 {
-			buffer[pos] = n[0]
-			pos++
+		var enc RlpSerializable
+		if h.valueNodesRlpEncoded {
+			enc = rlphacks.RlpEncodedBytes(n)
 		} else {
-			if h.valueNodesRlpEncoded {
-				pos = generateByteArrayLen(buffer, pos, len(n))
-			} else {
-				pos = generateByteArrayLenDouble(buffer, pos, len(n))
-			}
-			copy(buffer[pos:], n)
-			pos += len(n)
+			enc = rlphacks.RlpSerializableBytes(n)
 		}
+
+		bw := &ByteArrayWriter{}
+		bw.Setup(buffer, pos)
+
+		if err := enc.ToDoubleRLP(bw); err != nil {
+			panic(err)
+		}
+
+		pos += enc.DoubleRLPLen()
+
 		return buffer[4:pos]
 
 	case *accountNode:
