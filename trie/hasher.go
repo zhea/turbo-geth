@@ -136,6 +136,8 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 	buffer := h.buffers[bufOffset:]
 	pos := 4
 
+	fmt.Printf("hashChildren for tree... %p\n", h)
+
 	switch n := original.(type) {
 	case *shortNode:
 		// Starting at position 3, to leave space for len prefix
@@ -157,7 +159,13 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			if err != nil {
 				panic(err)
 			}
+
+			oldPos := pos
+
 			pos += written
+
+			fmt.Printf("case *shortNode->valueNode: pos %d -> %d\n", oldPos, pos)
+
 		} else if ac, ok := n.Val.(*accountNode); ok {
 			// Hashing the storage trie if necessary
 			if ac.storage == nil {
@@ -170,8 +178,11 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			if err != nil {
 				panic(err)
 			}
+			oldPos := pos
+
 			pos += written
 
+			fmt.Printf("case *shortNode->*accountNode: pos %d -> %d\n", oldPos, pos)
 		} else {
 			if n.Val == nil {
 				// empty byte array
@@ -263,14 +274,22 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			if err != nil {
 				panic(err)
 			}
+			oldPos := pos
+
 			pos += written
+
+			fmt.Printf("case *fullNode->*accountNode: pos %d -> %d\n", oldPos, pos)
 
 		case valueNode:
 			written, err := h.valueNodeToBuffer(n, buffer, pos)
 			if err != nil {
 				panic(err)
 			}
+			oldPos := pos
+
 			pos += written
+
+			fmt.Printf("case *fullNode->valueNode: pos %d -> %d\n", oldPos, pos)
 
 		case nil:
 			//	skip
@@ -285,7 +304,11 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 		if err != nil {
 			panic(err)
 		}
+		oldPos := pos
+
 		pos += written
+
+		fmt.Printf("case valueNode: pos %d -> %d\n", oldPos, pos)
 
 		return buffer[4:pos]
 
@@ -294,7 +317,11 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 
 		n.EncodeForHashing(encodedAccount.B)
 
+		oldPos := pos
+
 		pos += copy(buffer[pos:], encodedAccount.Bytes())
+
+		fmt.Printf("case *accountNode: pos %d -> %d\n", oldPos, pos)
 
 		pool.PutBuffer(encodedAccount)
 
