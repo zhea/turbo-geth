@@ -178,6 +178,7 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			encodedAccount := pool.GetBuffer(ac.EncodingLengthForHashing())
 			ac.EncodeForHashing(encodedAccount.B)
 			enc := rlphacks.RlpEncodedBytes(encodedAccount.Bytes())
+			pool.PutBuffer(encodedAccount)
 
 			bw := &ByteArrayWriter{}
 			bw.Setup(buffer, pos)
@@ -329,16 +330,13 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 
 	case *accountNode:
 		encodedAccount := pool.GetBuffer(n.EncodingLengthForHashing())
+
 		n.EncodeForHashing(encodedAccount.B)
-		enc := encodedAccount.Bytes()
+
+		pos += copy(buffer[pos:], encodedAccount.Bytes())
+
 		pool.PutBuffer(encodedAccount)
-		if len(enc) == 1 && enc[0] < 128 {
-			buffer[pos] = enc[0]
-			pos++
-		} else {
-			copy(buffer[pos:], enc)
-			pos += len(enc)
-		}
+
 		return buffer[4:pos]
 
 	case hashNode:
