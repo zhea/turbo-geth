@@ -31,6 +31,7 @@ type hasher struct {
 	sha                  keccakState
 	valueNodesRlpEncoded bool
 	buffers              [1024 * 1024]byte
+	bw                   *ByteArrayWriter
 }
 
 // keccakState wraps sha3.state. In addition to the usual hash methods, it also supports
@@ -49,7 +50,10 @@ func newHasher(valueNodesRlpEncoded bool) *hasher {
 	select {
 	case h = <-hasherPool:
 	default:
-		h = &hasher{sha: sha3.NewLegacyKeccak256().(keccakState)}
+		h = &hasher{
+			sha: sha3.NewLegacyKeccak256().(keccakState),
+			bw:  &ByteArrayWriter{},
+		}
 	}
 	h.valueNodesRlpEncoded = valueNodesRlpEncoded
 	return h
@@ -150,8 +154,7 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 		// Encode value
 		if vn, ok := n.Val.(valueNode); ok {
 
-			bw := &ByteArrayWriter{}
-			bw.Setup(buffer, pos)
+			h.bw.Setup(buffer, pos)
 
 			var val RlpSerializable
 
@@ -161,7 +164,7 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 				val = rlphacks.RlpSerializableBytes(vn)
 			}
 
-			if err := val.ToDoubleRLP(bw); err != nil {
+			if err := val.ToDoubleRLP(h.bw); err != nil {
 				panic(err)
 			}
 
@@ -180,10 +183,9 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			enc := rlphacks.RlpEncodedBytes(encodedAccount.Bytes())
 			pool.PutBuffer(encodedAccount)
 
-			bw := &ByteArrayWriter{}
-			bw.Setup(buffer, pos)
+			h.bw.Setup(buffer, pos)
 
-			if err := enc.ToDoubleRLP(bw); err != nil {
+			if err := enc.ToDoubleRLP(h.bw); err != nil {
 				panic(err)
 			}
 
@@ -293,15 +295,14 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			//	skip
 		}
 
-		bw := &ByteArrayWriter{}
 		if enc == nil {
 			buffer[pos] = byte(128)
 			pos++
 		} else {
-			bw.Setup(buffer, pos)
+			h.bw.Setup(buffer, pos)
 
 			// FIXME: return error here
-			if err := enc.ToDoubleRLP(bw); err != nil {
+			if err := enc.ToDoubleRLP(h.bw); err != nil {
 				panic(err)
 			}
 
@@ -317,10 +318,9 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			enc = rlphacks.RlpSerializableBytes(n)
 		}
 
-		bw := &ByteArrayWriter{}
-		bw.Setup(buffer, pos)
+		h.bw.Setup(buffer, pos)
 
-		if err := enc.ToDoubleRLP(bw); err != nil {
+		if err := enc.ToDoubleRLP(h.bw); err != nil {
 			panic(err)
 		}
 
