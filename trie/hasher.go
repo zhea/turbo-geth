@@ -155,14 +155,24 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 
 		// Encode value
 		if vn, ok := n.Val.(valueNode); ok {
-			written, err := h.valueNodeToBuffer(vn, buffer, pos)
-			if err != nil {
+
+			h.bw.Setup(buffer, pos)
+
+			var val RlpSerializable
+
+			if h.valueNodesRlpEncoded {
+				val = rlphacks.RlpEncodedBytes(vn)
+			} else {
+				val = rlphacks.RlpSerializableBytes(vn)
+			}
+
+			if err := val.ToDoubleRLP(h.bw); err != nil {
 				panic(err)
 			}
 
 			oldPos := pos
 
-			pos += written
+			pos += val.DoubleRLPLen()
 
 			fmt.Printf("case *shortNode->valueNode: pos %d -> %d\n", oldPos, pos)
 
@@ -174,15 +184,22 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 				h.hashInternal(ac.storage, true, ac.Root[:], bufOffset+pos)
 			}
 
-			written, err := h.accountNodeToBuffer(ac, buffer, pos)
-			if err != nil {
+			encodedAccount := pool.GetBuffer(ac.EncodingLengthForHashing())
+			ac.EncodeForHashing(encodedAccount.B)
+			enc := rlphacks.RlpEncodedBytes(encodedAccount.Bytes())
+			pool.PutBuffer(encodedAccount)
+
+			h.bw.Setup(buffer, pos)
+
+			if err := enc.ToDoubleRLP(h.bw); err != nil {
 				panic(err)
 			}
 			oldPos := pos
 
-			pos += written
+			pos += enc.DoubleRLPLen()
 
 			fmt.Printf("case *shortNode->*accountNode: pos %d -> %d\n", oldPos, pos)
+
 		} else {
 			if n.Val == nil {
 				// empty byte array
@@ -250,13 +267,14 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 
 	case *fullNode:
 		// Hash the full node's children, caching the newly hashed subtrees
-		for _, child := range n.Children[:16] {
+		for i, child := range n.Children[:16] {
 			if child == nil {
 				// empty byte array
 				buffer[pos] = byte(128)
 				pos++
 			} else {
 				// Reserve one byte for length
+				fmt.Printf("hashInternal[%d]\n", i)
 				hashLen := h.hashInternal(child, false, buffer[pos+1:], bufOffset+pos+1)
 				if hashLen == 32 {
 					buffer[pos] = byte(128 + 32)
@@ -268,28 +286,24 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 				}
 			}
 		}
+		var enc RlpSerializable
+
 		switch n := n.Children[16].(type) {
 		case *accountNode:
-			written, err := h.accountNodeToBuffer(n, buffer, pos)
-			if err != nil {
-				panic(err)
-			}
-			oldPos := pos
+			encodedAccount := pool.GetBuffer(n.EncodingLengthForHashing())
+			n.EncodeForHashing(encodedAccount.B)
 
-			pos += written
+			fmt.Printf("case *fullNode[16]->*accountNode: pos %d -> ....\n", pos)
 
-			fmt.Printf("case *fullNode->*accountNode: pos %d -> %d\n", oldPos, pos)
-
+			enc = rlphacks.RlpEncodedBytes(encodedAccount.Bytes())
+			pool.PutBuffer(encodedAccount)
 		case valueNode:
-			written, err := h.valueNodeToBuffer(n, buffer, pos)
-			if err != nil {
-				panic(err)
+			if h.valueNodesRlpEncoded {
+				enc = rlphacks.RlpEncodedBytes(n)
+			} else {
+				enc = rlphacks.RlpSerializableBytes(n)
 			}
-			oldPos := pos
-
-			pos += written
-
-			fmt.Printf("case *fullNode->valueNode: pos %d -> %d\n", oldPos, pos)
+			fmt.Printf("case *fullNode[16]->valueNode: pos %d -> ....\n", pos)
 
 		case nil:
 			//	skip
@@ -297,16 +311,40 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 			//	skip
 		}
 
+		if enc == nil {
+			buffer[pos] = byte(128)
+			pos++
+		} else {
+			h.bw.Setup(buffer, pos)
+
+			// FIXME: return error here
+			if err := enc.ToDoubleRLP(h.bw); err != nil {
+				panic(err)
+			}
+
+			pos += enc.DoubleRLPLen()
+
+		}
+
+		fmt.Printf(".....case pos .... -> %d\n", pos)
 		return finishRLP(buffer, pos)
 
 	case valueNode:
-		written, err := h.valueNodeToBuffer(n, buffer, pos)
-		if err != nil {
+		var enc RlpSerializable
+		if h.valueNodesRlpEncoded {
+			enc = rlphacks.RlpEncodedBytes(n)
+		} else {
+			enc = rlphacks.RlpSerializableBytes(n)
+		}
+
+		h.bw.Setup(buffer, pos)
+
+		if err := enc.ToDoubleRLP(h.bw); err != nil {
 			panic(err)
 		}
 		oldPos := pos
 
-		pos += written
+		pos += enc.DoubleRLPLen()
 
 		fmt.Printf("case valueNode: pos %d -> %d\n", oldPos, pos)
 
@@ -331,38 +369,6 @@ func (h *hasher) hashChildren(original node, bufOffset int) []byte {
 		panic("hashNode")
 	}
 	return nil
-}
-
-func (h *hasher) valueNodeToBuffer(vn valueNode, buffer []byte, pos int) (int, error) {
-	h.bw.Setup(buffer, pos)
-
-	var val RlpSerializable
-
-	if h.valueNodesRlpEncoded {
-		val = rlphacks.RlpEncodedBytes(vn)
-	} else {
-		val = rlphacks.RlpSerializableBytes(vn)
-	}
-
-	if err := val.ToDoubleRLP(h.bw); err != nil {
-		return 0, err
-	}
-	return val.DoubleRLPLen(), nil
-}
-
-func (h *hasher) accountNodeToBuffer(ac *accountNode, buffer []byte, pos int) (int, error) {
-	encodedAccount := pool.GetBuffer(ac.EncodingLengthForHashing())
-	defer pool.PutBuffer(encodedAccount)
-
-	ac.EncodeForHashing(encodedAccount.B)
-	enc := rlphacks.RlpEncodedBytes(encodedAccount.Bytes())
-	h.bw.Setup(buffer, pos)
-
-	if err := enc.ToDoubleRLP(h.bw); err != nil {
-		return 0, err
-	}
-
-	return enc.DoubleRLPLen(), nil
 }
 
 func EncodeAsValue(data []byte) ([]byte, error) {
