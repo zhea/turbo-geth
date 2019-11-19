@@ -1,6 +1,3 @@
 steps:
-  - command: "buildkite-agent pipeline upload"
-    label: ":pipeline:"
-
   - command: "echo \"hello world\""
     label: "helloworld"
