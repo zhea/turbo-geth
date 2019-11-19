@@ -1,4 +1,6 @@
 steps:
+  - command: 'make lintci-deps'
+    label: "install linters"
   - command: 'make lintci'
     label: "lint"
   - command: 'make test'
