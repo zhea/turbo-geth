@@ -195,10 +195,13 @@ func (t *Trie) PrintDiff(t2 *Trie, w io.Writer) {
 func (n *fullNode) fstring(ind string) string {
 	resp := fmt.Sprintf("full\n%s  ", ind)
 	for i, node := range &n.Children {
+		if indices[i] != "0" && indices[i] != "1" {
+			continue
+		}
 		if node == nil {
-			resp += fmt.Sprintf("%s: <nil> ", indices[i])
+			resp += fmt.Sprintf("- %s: <nil> ", indices[i])
 		} else {
-			resp += fmt.Sprintf("%s: %v", indices[i], node.fstring(ind+"  "))
+			resp += fmt.Sprintf("- %s: %v", indices[i], node.fstring(ind+"  "))
 		}
 	}
 	return resp + fmt.Sprintf("\n%s] ", ind)
@@ -232,7 +235,7 @@ func (n *duoNode) print(w io.Writer) {
 }
 
 func (n *shortNode) fstring(ind string) string {
-	return fmt.Sprintf("{%x: %v} ", n.Key, n.Val.fstring(ind+"  "))
+	return fmt.Sprintf("sh{%x: %v} ", n.Key, n.Val.fstring(ind+"  "))
 }
 func (n *shortNode) print(w io.Writer) {
 	fmt.Fprintf(w, "s(%x:", n.Key)
@@ -241,14 +244,14 @@ func (n *shortNode) print(w io.Writer) {
 }
 
 func (n hashNode) fstring(ind string) string {
-	return fmt.Sprintf("<%x> ", []byte(n))
+	return fmt.Sprintf("hash:<%x> ", []byte(n))
 }
 func (n hashNode) print(w io.Writer) {
 	fmt.Fprintf(w, "h(%x)", []byte(n))
 }
 
 func (n valueNode) fstring(ind string) string {
-	return fmt.Sprintf("%x ", []byte(n))
+	return fmt.Sprintf("val:%x ", []byte(n))
 }
 func (n valueNode) print(w io.Writer) {
 	fmt.Fprintf(w, "v(%x)", []byte(n))
@@ -259,9 +262,9 @@ func (an accountNode) fstring(ind string) string {
 	an.EncodeForHashing(encodedAccount.B)
 	defer pool.PutBuffer(encodedAccount)
 	if an.storage == nil {
-		return fmt.Sprintf("%x", encodedAccount.String())
+		return fmt.Sprintf("account:%x", encodedAccount.String())
 	}
-	return fmt.Sprintf("%x %v", encodedAccount.String(), an.storage.fstring(ind+" "))
+	return fmt.Sprintf("account: %x storage: %v", encodedAccount.String(), an.storage.fstring(ind+" "))
 }
 
 func (an accountNode) print(w io.Writer) {

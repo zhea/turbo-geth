@@ -212,6 +212,7 @@ func (tr *Resolver) finaliseRoot() error {
 		} else {
 			contractHex := keybytesToHex(tr.currentReq.contract)
 			contractHex = contractHex[:len(contractHex)-1-16] // Remove terminal nibble and incarnation bytes
+			contractHex = keyHexToBin(contractHex)
 			hookKey = append(contractHex, tr.currentReq.resolveHex[:tr.currentReq.resolvePos]...)
 		}
 		//fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
@@ -231,8 +232,8 @@ func (tr *Resolver) finaliseRoot() error {
 			}
 			return err
 		} else if len(tr.currentReq.resolveHash) == 0 {
-			fmt.Println("resolve/FinalizeRoot/accountRoot, ignoring hash")
-			fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
+			//fmt.Println("resolve/FinalizeRoot/accountRoot, ignoring hash")
+			//fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
 		}
 	}
 	return nil
