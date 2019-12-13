@@ -220,7 +220,7 @@ func (tr *Resolver) finaliseRoot() error {
 		//fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
 		tr.currentReq.t.hook(hookKey, hbRoot)
 		//fmt.Println("\n*******\ntrie after hook")
-		tr.currentReq.t.PrintTrie()
+		//tr.currentReq.t.PrintTrie()
 		if len(tr.currentReq.resolveHash) > 0 && !bytes.Equal(tr.currentReq.resolveHash, hbHash[:]) {
 			// FIXME: if binary trie only
 			err := fmt.Errorf("mismatching hash: %s %x for prefix %x, resolveHex %v, resolvePos %d",
