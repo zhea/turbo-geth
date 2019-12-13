@@ -224,7 +224,8 @@ func newTrieDbState(root common.Hash, db ethdb.Database, blockNr uint64) (*TrieD
 	if err != nil {
 		return nil, err
 	}
-	t := trie.New(root)
+	// FIXME: param-"binary"
+	t := trie.NewBinary(root)
 	tp := trie.NewTriePruning(blockNr)
 
 	tds := &TrieDbState{
@@ -1304,7 +1305,7 @@ func (tds *TrieDbState) ExtractWitness(trace bool, bin bool) ([]byte, *BlockWitn
 
 	tds.tMu.Lock()
 	if bin {
-		if err := bwb.MakeBlockWitnessBin(trie.HexToBin(tds.t), rs, codeMap); err != nil {
+		if err := bwb.MakeBlockWitnessBin(tds.t, rs, codeMap); err != nil {
 			tds.tMu.Unlock()
 			return nil, nil, err
 		}

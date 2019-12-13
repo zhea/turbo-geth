@@ -179,21 +179,31 @@ func hexToKeybytes(hex []byte) []byte {
 	if len(hex)&1 != 0 {
 		panic("can't convert hex key of odd length")
 	}
-	key := make([]byte, len(hex)/2)
+	key := make([]byte, len(hex)/8)
 	decodeNibbles(hex, key)
 	return key
 }
 
 func decodeNibbles(nibbles []byte, bytes []byte) {
-	if hasTerm(nibbles) {
-		nibbles = nibbles[:len(nibbles)-1]
+	// FIXME: support stuff
+	bi := 0
+	nibblesWritten := 0
+	for ni := 0; ni < len(nibbles); ni++ {
+		if nibbles[ni] == 0x0F {
+			bytes[bi] = 0x0F
+			bi++
+			nibblesWritten = 0
+		}
+		if nibblesWritten >= 8 {
+			nibblesWritten = 0
+			bi++
+		}
+		bytes[bi] = (bytes[bi] << 1) | nibbles[ni]
+		nibblesWritten++
 	}
-	nl := len(nibbles)
-	for bi, ni := 0, 0; ni < nl; bi, ni = bi+1, ni+2 {
-		if ni == nl-1 {
-			bytes[bi] = (bytes[bi] &^ 0xf0) | nibbles[ni]<<4
-		} else {
-			bytes[bi] = nibbles[ni]<<4 | nibbles[ni+1]
+	if len(nibbles)%8 != 0 {
+		for i := 0; i < 8-len(nibbles)%8; i++ {
+			bytes[bi] = bytes[bi] << 1
 		}
 	}
 }

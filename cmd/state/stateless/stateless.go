@@ -152,6 +152,7 @@ func Stateless(
 	blockProcessingStartTime := time.Now()
 
 	for !interrupt {
+		fmt.Printf("blockNum=%d\n", blockNum)
 		trace := false // blockNum == 545080
 		tds.SetResolveReads(blockNum >= witnessThreshold)
 		block := bcb.GetBlockByNumber(blockNum)
@@ -265,7 +266,7 @@ func Stateless(
 			}
 		}
 		nextRoot := roots[len(roots)-1]
-		if nextRoot != block.Root() {
+		if nextRoot != block.Root() && !binary {
 			fmt.Printf("Root hash does not match for block %d, expected %x, was %x\n", blockNum, block.Root(), nextRoot)
 			return
 		}

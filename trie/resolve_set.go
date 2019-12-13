@@ -35,7 +35,7 @@ type ResolveSet struct {
 
 // NewResolveSet creates new ResolveSet
 func NewResolveSet(minLength int) *ResolveSet {
-	return &ResolveSet{minLength: minLength}
+	return &ResolveSet{minLength: minLength, binary: true}
 }
 
 func NewBinaryResolveSet(minLength int) *ResolveSet {
@@ -54,6 +54,14 @@ func (rs *ResolveSet) AddHex(hex []byte) {
 		rs.hexes = append(rs.hexes, keyHexToBin(hex))
 	} else {
 		rs.hexes = append(rs.hexes, hex)
+	}
+}
+
+func (rs *ResolveSet) AddBin(bin []byte) {
+	if !rs.binary {
+		panic("should not happen, bin flag isn't set")
+	} else {
+		rs.hexes = append(rs.hexes, bin)
 	}
 }
 

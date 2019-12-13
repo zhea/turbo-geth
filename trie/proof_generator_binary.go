@@ -12,7 +12,7 @@ func expandKeyBin(hex []byte, nibble byte) []byte {
 
 // MakeBlockWitness constructs block witness from the given trie and the
 // list of keys that need to be accessible in such witness
-func (bwb *BlockWitnessBuilder) MakeBlockWitnessBin(t *BinaryTrie, rs *ResolveSet, codeMap map[common.Hash][]byte) error {
+func (bwb *BlockWitnessBuilder) MakeBlockWitnessBin(t *Trie, rs *ResolveSet, codeMap map[common.Hash][]byte) error {
 	hr := newHasher(false)
 	defer returnHasherToPool(hr)
 	return bwb.makeBlockWitness(t.root, []byte{}, rs, hr, true, codeMap, expandKeyBin)
