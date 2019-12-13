@@ -367,7 +367,9 @@ func (t *Trie) NeedResolution(contract []byte, storageKey []byte) (bool, *Resolv
 			hexContractLen := 8 * len(contract) // Length of 'contract' prefix in BIN encoding
 			hashToCheck := common.CopyBytes(n)
 			if accountRoot {
-				fmt.Printf("account root, ignoring hash checks\n")
+				fmt.Printf("account root, ignoring hash checks.key=%x\n", storageKey)
+				fmt.Printf("\t bin(full) = %v", hex)
+				fmt.Printf("\t bin(short) = %v", hex[hexContractLen:])
 				hashToCheck = nil
 				accountRoot = false
 			}
