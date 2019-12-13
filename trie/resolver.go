@@ -230,6 +230,9 @@ func (tr *Resolver) finaliseRoot() error {
 				return nil
 			}
 			return err
+		} else if len(tr.currentReq.resolveHash) == 0 {
+			fmt.Println("resolve/FinalizeRoot/accountRoot, ignoring hash")
+			fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
 		}
 	}
 	return nil

@@ -445,7 +445,7 @@ func (bwb *BlockWitnessBuilder) makeBlockWitness(
 			}
 			return bwb.hash(1)
 		}
-		return fmt.Errorf("unexpected hashNode: %s, at hex: %x (%d)", n, hex, len(hex))
+		return fmt.Errorf("unexpected hashNode: %s, at hex: %v (%d)", n, hex, len(hex))
 	default:
 		return fmt.Errorf("unexpected node: %T", nd)
 	}
