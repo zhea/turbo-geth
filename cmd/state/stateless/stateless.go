@@ -152,7 +152,6 @@ func Stateless(
 	blockProcessingStartTime := time.Now()
 
 	for !interrupt {
-		fmt.Printf("blockNum=%d\n", blockNum)
 		trace := false // blockNum == 545080
 		tds.SetResolveReads(blockNum >= witnessThreshold)
 		block := bcb.GetBlockByNumber(blockNum)
