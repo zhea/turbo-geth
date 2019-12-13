@@ -339,14 +339,15 @@ func (t *Trie) NeedResolution(contract []byte, storageKey []byte) (bool, *Resolv
 			nd = n.storage
 			incarnation = n.Incarnation
 		case hashNode:
-			/*
-				fmt.Printf("needs resolution -> true\n\tkey=%x\n\thex=%v, pos=%v, hash=%s\n", storageKey, hex, pos, n.String())
-				if contract != nil {
-					fmt.Printf("contract = %x\n", contract)
-				} else {
-					fmt.Printf("contract = <nil>\n")
-				}
-				fmt.Printf("trie = %s\n", t.root.fstring(""))
+			if contract != nil {
+				fmt.Printf("needs resolution -> true\n\tkey=%x\n\tpos=%v, hash=%s\n", storageKey, hex, pos, n.String())
+				fmt.Printf("\tcontract = %x\n", contract)
+			}
+			/* else {
+
+				fmt.Printf("contract = <nil>\n")
+			}
+			fmt.Printf("trie = %s\n", t.root.fstring(""))
 			*/
 			if contract == nil {
 				return true, t.NewResolveRequest(nil, hex, pos, common.CopyBytes(n))

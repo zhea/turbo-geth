@@ -146,9 +146,6 @@ func (tr *Resolver) PrepareResolveParams() ([][]byte, []uint) {
 			copy(key[:], req.contract)
 			decodeNibbles(req.resolveHex[:req.resolvePos], key[pLen:])
 			startkeys = append(startkeys, key)
-			if pLen > 0 {
-				fmt.Printf("pLen > 0 = %d; contract length replaced\n", pLen)
-			}
 			req.extResolvePos = req.resolvePos + 8*pLen
 			// FIXME: binary param?
 			fixedbits = append(fixedbits, uint(req.extResolvePos))
@@ -223,6 +220,8 @@ func (tr *Resolver) finaliseRoot() error {
 		//tr.currentReq.t.PrintTrie()
 		if len(tr.currentReq.resolveHash) > 0 && !bytes.Equal(tr.currentReq.resolveHash, hbHash[:]) {
 			// FIXME: if binary trie only
+
+			fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
 			err := fmt.Errorf("mismatching hash: %s %x for prefix %x, resolveHex %v, resolvePos %d",
 				tr.currentReq.resolveHash, hbHash, tr.currentReq.contract, tr.currentReq.resolveHex, tr.currentReq.resolvePos)
 			if len(hookKey) == 0 { // replacing root
