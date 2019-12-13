@@ -149,7 +149,7 @@ func (tr *Resolver) PrepareResolveParams() ([][]byte, []uint) {
 			if pLen > 0 {
 				fmt.Printf("pLen > 0 = %d; contract length replaced\n", pLen)
 			}
-			req.extResolvePos = req.resolvePos + 2*pLen
+			req.extResolvePos = req.resolvePos + 8*pLen
 			// FIXME: binary param?
 			fixedbits = append(fixedbits, uint(req.extResolvePos))
 			//fmt.Printf("fixedbits=%d key=%v\n", fixedbits, key)
