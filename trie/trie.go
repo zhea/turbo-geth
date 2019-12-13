@@ -299,6 +299,7 @@ func (t *Trie) NeedResolution(contract []byte, storageKey []byte) (bool, *Resolv
 	}
 	pos := 0
 	var incarnation uint64
+	accountRoot := false
 	for {
 		switch n := nd.(type) {
 		case nil:
@@ -338,6 +339,7 @@ func (t *Trie) NeedResolution(contract []byte, storageKey []byte) (bool, *Resolv
 			}
 			nd = n.storage
 			incarnation = n.Incarnation
+			accountRoot = true
 		case hashNode:
 			if contract != nil {
 				fmt.Printf("needs resolution -> true\n\tkey=%x\n\tpos=%v, hash=%s\n", storageKey, hex, pos, n.String())
@@ -357,7 +359,13 @@ func (t *Trie) NeedResolution(contract []byte, storageKey []byte) (bool, *Resolv
 			copy(prefix, contract)
 			binary.BigEndian.PutUint64(prefix[len(contract):], incarnation^0xffffffffffffffff)
 			hexContractLen := 8 * len(contract) // Length of 'contract' prefix in BIN encoding
-			return true, t.NewResolveRequest(prefix, hex[hexContractLen:], pos-hexContractLen, common.CopyBytes(n))
+			hashToCheck := common.CopyBytes(n)
+			if accountRoot {
+				fmt.Printf("account root, ignoring hash checks\n")
+				hashToCheck = nil
+				accountRoot = false
+			}
+			return true, t.NewResolveRequest(prefix, hex[hexContractLen:], pos-hexContractLen, hashToCheck)
 
 		default:
 			panic(fmt.Sprintf("Unknown node: %T", n))
