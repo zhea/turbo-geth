@@ -152,7 +152,7 @@ func (tr *Resolver) PrepareResolveParams() ([][]byte, []uint) {
 			req.extResolvePos = req.resolvePos + 2*pLen
 			// FIXME: binary param?
 			fixedbits = append(fixedbits, uint(req.extResolvePos))
-			fmt.Printf("fixedbits=%d key=%v\n", fixedbits, key)
+			//fmt.Printf("fixedbits=%d key=%v\n", fixedbits, key)
 			prevReq = req
 			var minLength int
 			if req.resolvePos >= tr.topLevels {
@@ -330,7 +330,7 @@ func (tr *Resolver) ResolveWithDb(db ethdb.Database, blockNr uint64) error {
 		}
 		return fmt.Errorf("Unexpected resolution: %s at %s", b.String(), debug.Stack())
 	}
-	fmt.Printf("startkeys = %v\n\n", startkeys)
+	//fmt.Printf("startkeys = %v\n\n", startkeys)
 	if tr.accounts {
 		if tr.historical {
 			err = db.MultiWalkAsOf(dbutils.AccountsBucket, dbutils.AccountsHistoryBucket, startkeys, fixedbits, blockNr+1, tr.Walker)
