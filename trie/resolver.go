@@ -146,8 +146,13 @@ func (tr *Resolver) PrepareResolveParams() ([][]byte, []uint) {
 			copy(key[:], req.contract)
 			decodeNibbles(req.resolveHex[:req.resolvePos], key[pLen:])
 			startkeys = append(startkeys, key)
+			if pLen > 0 {
+				fmt.Printf("pLen > 0 = %d; contract length replaced\n", pLen)
+			}
 			req.extResolvePos = req.resolvePos + 2*pLen
-			fixedbits = append(fixedbits, uint(4*req.extResolvePos))
+			// FIXME: binary param?
+			fixedbits = append(fixedbits, uint(req.extResolvePos))
+			fmt.Printf("fixedbits=%d key=%v\n", fixedbits, key)
 			prevReq = req
 			var minLength int
 			if req.resolvePos >= tr.topLevels {
@@ -157,10 +162,11 @@ func (tr *Resolver) PrepareResolveParams() ([][]byte, []uint) {
 			}
 			rs := NewResolveSet(minLength)
 			tr.rss = append(tr.rss, rs)
-			rs.AddHex(req.resolveHex[req.resolvePos:])
+			// FIXME: binary param
+			rs.AddBin(req.resolveHex[req.resolvePos:])
 		} else {
 			rs := tr.rss[len(tr.rss)-1]
-			rs.AddHex(req.resolveHex[req.resolvePos:])
+			rs.AddBin(req.resolveHex[req.resolvePos:])
 		}
 	}
 	tr.currentReq = tr.requests[tr.reqIndices[0]]
@@ -213,9 +219,18 @@ func (tr *Resolver) finaliseRoot() error {
 		}
 		//fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
 		tr.currentReq.t.hook(hookKey, hbRoot)
+		//fmt.Println("\n*******\ntrie after hook")
+		tr.currentReq.t.PrintTrie()
 		if len(tr.currentReq.resolveHash) > 0 && !bytes.Equal(tr.currentReq.resolveHash, hbHash[:]) {
-			return fmt.Errorf("mismatching hash: %s %x for prefix %x, resolveHex %x, resolvePos %d",
+			// FIXME: if binary trie only
+			err := fmt.Errorf("mismatching hash: %s %x for prefix %x, resolveHex %v, resolvePos %d",
 				tr.currentReq.resolveHash, hbHash, tr.currentReq.contract, tr.currentReq.resolveHex, tr.currentReq.resolvePos)
+			if len(hookKey) == 0 { // replacing root
+				fmt.Println("root node hash mismatch, ignoring")
+				fmt.Printf("%v\n", err)
+				return nil
+			}
+			return err
 		}
 	}
 	return nil
@@ -253,18 +268,9 @@ func (tr *Resolver) Walker(keyIdx int, k []byte, v []byte) error {
 		tr.curr.Write(tr.succ.Bytes())
 		tr.succ.Reset()
 		skip := tr.currentReq.extResolvePos // how many first nibbles to skip
-		i := 0
-		for _, b := range k {
-			if i >= skip {
-				tr.succ.WriteByte(b / 16)
-			}
-			i++
-			if i >= skip {
-				tr.succ.WriteByte(b % 16)
-			}
-			i++
-		}
-		tr.succ.WriteByte(16)
+		// FIXME: "binary" param here
+		binKey := keyHexToBin(keybytesToHex(k))
+		tr.succ.Write(binKey[skip:])
 		if tr.curr.Len() > 0 {
 			var err error
 			var data GenStructStepData
@@ -324,6 +330,7 @@ func (tr *Resolver) ResolveWithDb(db ethdb.Database, blockNr uint64) error {
 		}
 		return fmt.Errorf("Unexpected resolution: %s at %s", b.String(), debug.Stack())
 	}
+	fmt.Printf("startkeys = %v\n\n", startkeys)
 	if tr.accounts {
 		if tr.historical {
 			err = db.MultiWalkAsOf(dbutils.AccountsBucket, dbutils.AccountsHistoryBucket, startkeys, fixedbits, blockNr+1, tr.Walker)
