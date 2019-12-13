@@ -303,8 +303,10 @@ func (t *Trie) NeedResolution(contract []byte, storageKey []byte) (bool, *Resolv
 	for {
 		switch n := nd.(type) {
 		case nil:
+			accountRoot = false
 			return false, nil
 		case *shortNode:
+			accountRoot = false
 			matchlen := prefixLen(hex[pos:], n.Key)
 			if matchlen == len(n.Key) || n.Key[matchlen] == 16 {
 				nd = n.Val
@@ -313,6 +315,7 @@ func (t *Trie) NeedResolution(contract []byte, storageKey []byte) (bool, *Resolv
 			}
 			pos += matchlen
 		case *duoNode:
+			accountRoot = false
 			i1, i2 := n.childrenIdx()
 			switch hex[pos] {
 			case i1:
@@ -325,6 +328,7 @@ func (t *Trie) NeedResolution(contract []byte, storageKey []byte) (bool, *Resolv
 				return false, nil
 			}
 		case *fullNode:
+			accountRoot = false
 			child := n.Children[hex[pos]]
 			if child == nil {
 				return false, nil
@@ -332,6 +336,7 @@ func (t *Trie) NeedResolution(contract []byte, storageKey []byte) (bool, *Resolv
 			nd = child
 			pos++
 		case valueNode:
+			accountRoot = false
 			return false, nil
 		case *accountNode:
 			if pos == len(hex) {
