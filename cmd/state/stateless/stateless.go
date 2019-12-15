@@ -152,7 +152,7 @@ func Stateless(
 	blockProcessingStartTime := time.Now()
 
 	for !interrupt {
-		if blockNum > 1 {
+		if blockNum > 6 {
 			fmt.Println("ENOUGH")
 			break
 		}

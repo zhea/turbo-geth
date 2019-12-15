@@ -128,6 +128,9 @@ func GenStructStep(
 						return nil, err
 					}
 				} else {
+					fmt.Printf("remainderLen = %d, curr=%v buildign extension for %v\n", remainderLen, curr, curr[remainderStart:remainderStart+remainderLen])
+					fmt.Printf("succ=%v curr=%v\n", succ, curr)
+					fmt.Printf("precLen = %d maxLen=%d\n", precLen, maxLen)
 					if err := e.extension(curr[remainderStart : remainderStart+remainderLen]); err != nil {
 						return nil, err
 					}
@@ -144,11 +147,6 @@ func GenStructStep(
 				}
 			case GenStructStepAccountData:
 				if emitHash {
-					if fmt.Sprintf("%x", curr[:8]) == "0001000001000101" {
-						//fmt.Printf("curr = %v\n", curr)
-						fmt.Printf("-GenStructStep/AccountData/accountLeafHash curr[:maxLen=%d]=%x\n", maxLen, curr[:maxLen])
-						fmt.Printf("hashonly[8] = %v\n", hashOnly(curr[:8]))
-					}
 					if err := e.accountLeafHash(remainderLen, curr, v.StorageSize, v.Balance, v.Nonce, v.FieldSet); err != nil {
 						return nil, err
 					}
@@ -173,11 +171,14 @@ func GenStructStep(
 				panic(fmt.Errorf("unknown data type: %T", data))
 			}
 		}
+		fmt.Printf("precLen = %d succLen = %d len(succ) = %d\n", precLen, succLen, len(succ))
 		// Check for the optional part
 		if precLen <= succLen && len(succ) > 0 {
 			return groups, nil
 		}
 		// Close the immediately encompassing prefix group, if needed
+
+		fmt.Printf("len(succ) = %d || precExist=%v\n", len(succ), precExists)
 		if len(succ) > 0 || precExists {
 			if hashOnly(curr[:maxLen]) {
 				if err := e.branchHash(groups[maxLen]); err != nil {
@@ -199,6 +200,8 @@ func GenStructStep(
 		for len(groups) > 0 && groups[len(groups)-1] == 0 {
 			groups = groups[:len(groups)-1]
 		}
+
+		fmt.Printf("to a new iteration groups now=%b\n", groups)
 	}
 	return nil, nil
 

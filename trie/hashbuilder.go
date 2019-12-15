@@ -78,7 +78,7 @@ func (hb *HashBuilder) leafHashWithKeyVal(key []byte, val RlpSerializable) error
 	var ni int
 	var compact0 byte
 	if hasTerm(key) {
-		compactLen = (len(key)-1)/2 + 1
+		compactLen = (len(key)-1)/8 + 1
 		if len(key)&1 == 0 {
 			compact0 = 0x30 + key[0] // Odd: (3<<4) + first nibble
 			ni = 1
@@ -86,7 +86,7 @@ func (hb *HashBuilder) leafHashWithKeyVal(key []byte, val RlpSerializable) error
 			compact0 = 0x20
 		}
 	} else {
-		compactLen = len(key)/2 + 1
+		compactLen = len(key)/8 + 1
 		if len(key)&1 == 1 {
 			compact0 = 0x10 + key[0] // Odd: (1<<4) + first nibble
 			ni = 1
@@ -141,11 +141,16 @@ func (hb *HashBuilder) completeLeafHash(kp, kl, compactLen int, key []byte, keyP
 		return err
 	}
 	for i := 1; i < compactLen; i++ {
-		b[0] = key[ni]*16 + key[ni+1]
+		for z := 0; z < 8; z++ {
+			if ni+z < len(key) {
+				b[0] = b[0] | key[ni+z]
+			}
+			b[0] = b[0] << 1
+		}
 		if _, err := writer.Write(b[:]); err != nil {
 			return err
 		}
-		ni += 2
+		ni += 8
 	}
 
 	if err := val.ToDoubleRLP(writer); err != nil {

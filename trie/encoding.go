@@ -219,8 +219,7 @@ func prefixLen(a, b []byte) int {
 			break
 		}
 	}
-	// calculate in old hex nibbles (not binaries)
-	return i - i%4
+	return i
 }
 
 // hasTerm returns whether a hex key has the terminator flag.
