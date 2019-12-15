@@ -152,7 +152,7 @@ func Stateless(
 	blockProcessingStartTime := time.Now()
 
 	for !interrupt {
-		if blockNum > 6 {
+		if blockNum > 1 {
 			fmt.Println("ENOUGH")
 			break
 		}
@@ -197,10 +197,14 @@ func Stateless(
 			return
 		}
 
+		fmt.Printf("resolving state trie\n")
 		if err = tds.ResolveStateTrie(); err != nil {
 			fmt.Printf("Failed to resolve state trie: %v\n", err)
 			return
 		}
+
+		fmt.Printf("ENDOF resolving state trie\n")
+
 		witness = nil
 		if blockNum >= witnessThreshold {
 			// Witness has to be extracted before the state trie is modified

@@ -378,6 +378,7 @@ func (bwb *BlockWitnessBuilder) makeBlockWitness(
 				}
 			}
 		default:
+			fmt.Printf("adding extension on path: %v -> %v", hex, hexVal)
 			if err := bwb.extension(n.Key); err != nil {
 				return err
 			}
