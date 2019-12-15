@@ -188,6 +188,7 @@ func (tr *Resolver) finaliseRoot() error {
 				Nonce:       tr.a.Nonce,
 			}
 		}
+		fmt.Printf("rs=%+v\n", tr.currentRs)
 		tr.groups, err = GenStructStep(tr.currentRs.HashOnly, tr.curr.Bytes(), tr.succ.Bytes(), tr.hb, data, tr.groups)
 		if err != nil {
 			return err
@@ -267,6 +268,9 @@ func (tr *Resolver) Walker(keyIdx int, k []byte, v []byte) error {
 		tr.curr.Reset()
 	}
 	if len(v) > 0 {
+		if strings.HasPrefix(fmt.Sprintf("%x", k), "4b") {
+			fmt.Printf("k=%x\n", k)
+		}
 		tr.curr.Reset()
 		tr.curr.Write(tr.succ.Bytes())
 		tr.succ.Reset()
