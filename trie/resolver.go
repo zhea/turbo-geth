@@ -119,8 +119,9 @@ func (tr *Resolver) AddRequest(req *ResolveRequest) {
 }
 
 func (tr *Resolver) Print() {
+	fmt.Printf("Resolver!\n")
 	for _, req := range tr.requests {
-		fmt.Printf("%s\n", req.String())
+		fmt.Printf("- %s\n", req.String())
 	}
 }
 
@@ -149,7 +150,7 @@ func (tr *Resolver) PrepareResolveParams() ([][]byte, []uint) {
 			req.extResolvePos = req.resolvePos + 8*pLen
 			// FIXME: binary param?
 			fixedbits = append(fixedbits, uint(req.extResolvePos))
-			fmt.Printf("fixedbits=%d key=%v\n", fixedbits, key)
+			//fmt.Printf("fixedbits=%d key=%v\n", fixedbits, key)
 			prevReq = req
 			var minLength int
 			if req.resolvePos >= tr.topLevels {
@@ -188,7 +189,7 @@ func (tr *Resolver) finaliseRoot() error {
 				Nonce:       tr.a.Nonce,
 			}
 		}
-		fmt.Printf("rs=%+v\n", tr.currentRs)
+		//fmt.Printf("rs=%+v\n", tr.currentRs)
 		tr.groups, err = GenStructStep(tr.currentRs.HashOnly, tr.curr.Bytes(), tr.succ.Bytes(), tr.hb, data, tr.groups)
 		if err != nil {
 			return err
@@ -226,6 +227,7 @@ func (tr *Resolver) finaliseRoot() error {
 			fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
 			err := fmt.Errorf("mismatching hash: %s %x for prefix %x, resolveHex %v, resolvePos %d",
 				tr.currentReq.resolveHash, hbHash, tr.currentReq.contract, tr.currentReq.resolveHex, tr.currentReq.resolvePos)
+			tr.Print()
 			if len(hookKey) == 0 { // replacing root
 				fmt.Println("root node hash mismatch, ignoring")
 				fmt.Printf("%v\n", err)
@@ -268,9 +270,6 @@ func (tr *Resolver) Walker(keyIdx int, k []byte, v []byte) error {
 		tr.curr.Reset()
 	}
 	if len(v) > 0 {
-		if strings.HasPrefix(fmt.Sprintf("%x", k), "4b") {
-			fmt.Printf("k=%x\n", k)
-		}
 		tr.curr.Reset()
 		tr.curr.Write(tr.succ.Bytes())
 		tr.succ.Reset()

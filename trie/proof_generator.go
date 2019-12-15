@@ -170,11 +170,11 @@ func (bwb *BlockWitnessBuilder) supplyHash(hash common.Hash) error {
 
 func (bwb *BlockWitnessBuilder) leaf(length int) error {
 	o := OpLeaf
-	fmt.Println("Structure <- OpLeaf")
+	// fmt.Println("Structure <- OpLeaf")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
-	fmt.Printf("Structure <- len=%d\n", length)
+	// fmt.Printf("Structure <- len=%d\n", length)
 	if err := bwb.Structure.encoder.Encode(&length); err != nil {
 		return err
 	}
@@ -183,11 +183,11 @@ func (bwb *BlockWitnessBuilder) leaf(length int) error {
 
 func (bwb *BlockWitnessBuilder) leafHash(length int) error {
 	o := OpLeafHash
-	fmt.Println("Structure <- OpLeafHash")
+	// fmt.Println("Structure <- OpLeafHash")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
-	fmt.Printf("Structure <- len=%d\n", length)
+	// fmt.Printf("Structure <- len=%d\n", length)
 	if err := bwb.Structure.encoder.Encode(&length); err != nil {
 		return err
 	}
@@ -196,11 +196,11 @@ func (bwb *BlockWitnessBuilder) leafHash(length int) error {
 
 func (bwb *BlockWitnessBuilder) extension(key []byte) error {
 	o := OpExtension
-	fmt.Println("Structure <- OpExtension")
+	// fmt.Println("Structure <- OpExtension")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
-	fmt.Printf("Structure <- key=%x\n", key)
+	// fmt.Printf("Structure <- key=%x\n", key)
 	if err := bwb.Structure.encoder.Encode(key); err != nil {
 		return err
 	}
@@ -209,11 +209,11 @@ func (bwb *BlockWitnessBuilder) extension(key []byte) error {
 
 func (bwb *BlockWitnessBuilder) extensionHash(key []byte) error {
 	o := OpExtensionHash
-	fmt.Println("Structure <- OpExtensionHash")
+	// fmt.Println("Structure <- OpExtensionHash")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
-	fmt.Printf("Structure <- key=%x\n", key)
+	// fmt.Printf("Structure <- key=%x\n", key)
 	if err := bwb.Structure.encoder.Encode(key); err != nil {
 		return err
 	}
@@ -222,11 +222,11 @@ func (bwb *BlockWitnessBuilder) extensionHash(key []byte) error {
 
 func (bwb *BlockWitnessBuilder) branch(set uint32) error {
 	o := OpBranch
-	fmt.Println("Structure <- OpBranch")
+	// fmt.Println("Structure <- OpBranch")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
-	fmt.Printf("Structure <- set=%x\n", set)
+	// fmt.Printf("Structure <- set=%x\n", set)
 	if err := bwb.Structure.encoder.Encode(&set); err != nil {
 		return err
 	}
@@ -235,11 +235,11 @@ func (bwb *BlockWitnessBuilder) branch(set uint32) error {
 
 func (bwb *BlockWitnessBuilder) branchHash(set uint32) error {
 	o := OpBranchHash
-	fmt.Println("Structure <- OpBranchHash")
+	// fmt.Println("Structure <- OpBranchHash")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
-	fmt.Printf("Structure <- set=%x\n", set)
+	// fmt.Printf("Structure <- set=%x\n", set)
 	if err := bwb.Structure.encoder.Encode(&set); err != nil {
 		return err
 	}
@@ -248,11 +248,11 @@ func (bwb *BlockWitnessBuilder) branchHash(set uint32) error {
 
 func (bwb *BlockWitnessBuilder) hash(number int) error {
 	o := OpHash
-	fmt.Println("Structure <- OpHash")
+	// fmt.Println("Structure <- OpHash")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
-	fmt.Printf("Structure <- number=%d\n", number)
+	// fmt.Printf("Structure <- number=%d\n", number)
 	if err := bwb.Structure.encoder.Encode(&number); err != nil {
 		return err
 	}
@@ -261,7 +261,7 @@ func (bwb *BlockWitnessBuilder) hash(number int) error {
 
 func (bwb *BlockWitnessBuilder) code() error {
 	o := OpCode
-	fmt.Println("Structure <- OpCode")
+	// fmt.Println("Structure <- OpCode")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
@@ -270,17 +270,17 @@ func (bwb *BlockWitnessBuilder) code() error {
 
 func (bwb *BlockWitnessBuilder) accountLeaf(length int, fieldSet uint32) error {
 	o := OpAccountLeaf
-	fmt.Println("Structure <- OpAccountLeaf")
+	// fmt.Println("Structure <- OpAccountLeaf")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
 
-	fmt.Printf("Structure <- length=%d\n", length)
+	// fmt.Printf("Structure <- length=%d\n", length)
 	if err := bwb.Structure.encoder.Encode(&length); err != nil {
 		return err
 	}
 
-	fmt.Printf("Structure <- fieldSet=%x\n", length)
+	// fmt.Printf("Structure <- fieldSet=%x\n", length)
 	if err := bwb.Structure.encoder.Encode(&fieldSet); err != nil {
 		return err
 	}
@@ -290,17 +290,17 @@ func (bwb *BlockWitnessBuilder) accountLeaf(length int, fieldSet uint32) error {
 func (bwb *BlockWitnessBuilder) accountLeafHash(length int, fieldSet uint32) error {
 	o := OpAccountLeafHash
 
-	fmt.Println("Structure <- OpAccountLeafHash")
+	// fmt.Println("Structure <- OpAccountLeafHash")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
 
-	fmt.Printf("Structure <- length=%d\n", length)
+	// fmt.Printf("Structure <- length=%d\n", length)
 	if err := bwb.Structure.encoder.Encode(&length); err != nil {
 		return err
 	}
 
-	fmt.Printf("Structure <- fieldSet=%x\n", length)
+	// fmt.Printf("Structure <- fieldSet=%x\n", length)
 	if err := bwb.Structure.encoder.Encode(&fieldSet); err != nil {
 		return err
 	}
@@ -310,7 +310,7 @@ func (bwb *BlockWitnessBuilder) accountLeafHash(length int, fieldSet uint32) err
 func (bwb *BlockWitnessBuilder) emptyRoot() error {
 	o := OpEmptyRoot
 
-	fmt.Println("Structure <- OpEmptyRoot")
+	// fmt.Println("Structure <- OpEmptyRoot")
 	if err := bwb.Structure.encoder.Encode(&o); err != nil {
 		return err
 	}
@@ -378,7 +378,7 @@ func (bwb *BlockWitnessBuilder) makeBlockWitness(
 				}
 			}
 		default:
-			fmt.Printf("adding extension on path(got %T): %v -> %v\n", v, hex, hexVal)
+			//fmt.Printf("adding extension on path(got %T): %v -> %v\n", v, hex, hexVal)
 			if err := bwb.extension(n.Key); err != nil {
 				return err
 			}
