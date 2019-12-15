@@ -299,12 +299,11 @@ func (hb *HashBuilder) accountLeafHashWithKey(key []byte, popped int) error {
 }
 
 func (hb *HashBuilder) extension(key []byte) error {
-	if hb.trace {
-		fmt.Printf("EXTENSION %x\n", key)
-	}
+	fmt.Printf("EXTENSION %x\n", key)
 	nd := hb.nodeStack[len(hb.nodeStack)-1]
 	switch n := nd.(type) {
 	case nil:
+		fmt.Printf("nd == nil, adding hashNode\n")
 		branchHash := common.CopyBytes(hb.hashStack[len(hb.hashStack)-common.HashLength:])
 		hb.nodeStack[len(hb.nodeStack)-1] = &shortNode{Key: common.CopyBytes(key), Val: hashNode(branchHash)}
 	case *fullNode:
