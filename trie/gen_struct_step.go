@@ -144,11 +144,16 @@ func GenStructStep(
 				}
 			case GenStructStepAccountData:
 				if emitHash {
+					if fmt.Sprintf("%x", curr[:8]) == "0001000001000101" {
+						//fmt.Printf("curr = %v\n", curr)
+						fmt.Printf("-GenStructStep/AccountData/accountLeafHash curr[:maxLen=%d]=%x\n", maxLen, curr[:maxLen])
+						fmt.Printf("hashonly[8] = %v\n", hashOnly(curr[:8]))
+					}
 					if err := e.accountLeafHash(remainderLen, curr, v.StorageSize, v.Balance, v.Nonce, v.FieldSet); err != nil {
 						return nil, err
 					}
 				} else {
-					fmt.Printf("-GenStructStep/AccountData/accountLeaf\n")
+					fmt.Printf("-GenStructStep/AccountData/accountLeaf remainderLen=%d curr[:maxLen=%d]=%x\n", remainderLen, maxLen, curr[:maxLen])
 					if err := e.accountLeaf(remainderLen, curr, v.StorageSize, v.Balance, v.Nonce, v.FieldSet); err != nil {
 						return nil, err
 					}
