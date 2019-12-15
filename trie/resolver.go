@@ -224,10 +224,10 @@ func (tr *Resolver) finaliseRoot() error {
 		if len(tr.currentReq.resolveHash) > 0 && !bytes.Equal(tr.currentReq.resolveHash, hbHash[:]) {
 			// FIXME: if binary trie only
 
-			fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
+			//fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
 			err := fmt.Errorf("mismatching hash: %s %x for prefix %x, resolveHex %v, resolvePos %d",
 				tr.currentReq.resolveHash, hbHash, tr.currentReq.contract, tr.currentReq.resolveHex, tr.currentReq.resolvePos)
-			tr.Print()
+			//tr.Print()
 			if len(hookKey) == 0 { // replacing root
 				fmt.Println("root node hash mismatch, ignoring")
 				fmt.Printf("%v\n", err)
