@@ -233,6 +233,10 @@ func (tr *Resolver) finaliseRoot() error {
 				fmt.Printf("%v\n", err)
 				return nil
 			}
+			if err != nil {
+				fmt.Println("ignoring hash checks for now")
+				err = nil
+			}
 			return err
 		} else if len(tr.currentReq.resolveHash) == 0 {
 			//fmt.Println("resolve/FinalizeRoot/accountRoot, ignoring hash")
