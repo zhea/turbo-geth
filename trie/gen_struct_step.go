@@ -148,6 +148,7 @@ func GenStructStep(
 						return nil, err
 					}
 				} else {
+					fmt.Printf("-GenStructStep/AccountData/accountLeaf\n")
 					if err := e.accountLeaf(remainderLen, curr, v.StorageSize, v.Balance, v.Nonce, v.FieldSet); err != nil {
 						return nil, err
 					}
