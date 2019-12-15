@@ -559,6 +559,9 @@ func (tds *TrieDbState) ResolveStateTrie() error {
 	// Prepare (resolve) accounts trie so that actual modifications can proceed without database access
 	accountTouches, _ := tds.buildAccountTouches(tds.resolveReads, false)
 	fmt.Printf("accountTouches: %v\n", len(accountTouches))
+	for _, touch := range accountTouches {
+		fmt.Printf("\t%x\n", touch)
+	}
 	fmt.Printf("storageTouches: %v\n", storageTouches)
 	if err := tds.resolveAccountTouches(accountTouches); err != nil {
 		return err

@@ -149,7 +149,7 @@ func (tr *Resolver) PrepareResolveParams() ([][]byte, []uint) {
 			req.extResolvePos = req.resolvePos + 8*pLen
 			// FIXME: binary param?
 			fixedbits = append(fixedbits, uint(req.extResolvePos))
-			//fmt.Printf("fixedbits=%d key=%v\n", fixedbits, key)
+			fmt.Printf("fixedbits=%d key=%v\n", fixedbits, key)
 			prevReq = req
 			var minLength int
 			if req.resolvePos >= tr.topLevels {
@@ -287,6 +287,7 @@ func (tr *Resolver) Walker(keyIdx int, k []byte, v []byte) error {
 					Nonce:       tr.a.Nonce,
 				}
 			}
+			//fmt.Printf("GenStructStepData: key=%x, data=%+v\n", k, data)
 			tr.groups, err = GenStructStep(tr.currentRs.HashOnly, tr.curr.Bytes(), tr.succ.Bytes(), tr.hb, data, tr.groups)
 			if err != nil {
 				return err
