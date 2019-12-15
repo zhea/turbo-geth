@@ -1304,6 +1304,8 @@ func (tds *TrieDbState) ExtractWitness(trace bool, bin bool) ([]byte, *BlockWitn
 	}
 	codeMap := tds.pg.ExtractCodeMap()
 
+	tds.t.PrintTrie()
+
 	tds.tMu.Lock()
 	if bin {
 		if err := bwb.MakeBlockWitnessBin(tds.t, rs, codeMap); err != nil {
