@@ -294,6 +294,10 @@ func Stateless(
 			tds.PruneTries(false)
 		}
 
+		if blockNum%1000 == 0 {
+			tds.PruneTries(false)
+		}
+
 		if willSnapshot {
 			// Snapshots of the state will be written to the same directory as the state file
 			fmt.Printf("\nSaving snapshot at block %d, hash %x\n", blockNum, block.Root())
