@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ledgerwatch/turbo-geth/common"
 	"github.com/ledgerwatch/turbo-geth/common/dbutils"
 	"github.com/ledgerwatch/turbo-geth/core/types/accounts"
 	"github.com/ledgerwatch/turbo-geth/ethdb"
@@ -221,7 +222,8 @@ func (tr *Resolver) finaliseRoot() error {
 		tr.currentReq.t.hook(hookKey, hbRoot)
 		//fmt.Println("\n*******\ntrie after hook")
 		//tr.currentReq.t.PrintTrie()
-		if len(tr.currentReq.resolveHash) > 0 && !bytes.Equal(tr.currentReq.resolveHash, hbHash[:]) {
+		emptyHash := common.Hash{}
+		if len(tr.currentReq.resolveHash) > 0 && !bytes.Equal(tr.currentReq.resolveHash, hbHash[:]) && !bytes.Equal(tr.currentReq.resolveHash, emptyHash[:]) {
 			// FIXME: if binary trie only
 
 			//fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
@@ -232,10 +234,6 @@ func (tr *Resolver) finaliseRoot() error {
 				fmt.Println("root node hash mismatch, ignoring")
 				fmt.Printf("%v\n", err)
 				return nil
-			}
-			if err != nil {
-				fmt.Println("ignoring hash checks for now")
-				err = nil
 			}
 			return err
 		} else if len(tr.currentReq.resolveHash) == 0 {
