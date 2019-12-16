@@ -341,7 +341,7 @@ func Stateless(
 		blockNum++
 		processed++
 
-		if blockNum%10 == 0 {
+		if blockNum%1000 == 0 {
 			// overwrite terminal line, if no snapshot was made and not the first line
 			if blockNum > 0 && !willSnapshot {
 				fmt.Printf("\r")
@@ -353,7 +353,7 @@ func Stateless(
 			}
 			blocksPerSecond := float64(processed) / float64(secondsSinceStart)
 
-			fmt.Printf("Processed %d blocks (%v blocks/sec)", blockNum, blocksPerSecond)
+			fmt.Printf("Processed %d blocks (%v blocks/sec)\n", blockNum, blocksPerSecond)
 		}
 		// Check for interrupts
 		select {

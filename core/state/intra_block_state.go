@@ -488,6 +488,9 @@ func (sdb *IntraBlockState) AddBalance(addr common.Address, amount *big.Int) {
 	stateObject := sdb.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.AddBalance(amount)
+		if foundTheAccount {
+			fmt.Printf("balance after AddBalance: %v\n", stateObject.Balance().String())
+		}
 	}
 }
 
@@ -515,6 +518,9 @@ func (sdb *IntraBlockState) SubBalance(addr common.Address, amount *big.Int) {
 	stateObject := sdb.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SubBalance(amount)
+		if foundTheAccount {
+			fmt.Printf("balance after SubBalance: %v\n", stateObject.Balance().String())
+		}
 	}
 }
 
