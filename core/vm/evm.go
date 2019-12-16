@@ -17,7 +17,9 @@
 package vm
 
 import (
+	"fmt"
 	"math/big"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -196,7 +198,15 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		return nil, gas, ErrDepth
 	}
 	// Fail if we're trying to transfer more than the available balance
+	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
+	foundTheAccount := strings.EqualFold(caller.Address().Hex(), theAccountHex)
+	if foundTheAccount {
+		fmt.Printf("Call / trying to transfer %v\n", value.String())
+	}
 	if !evm.Context.CanTransfer(evm.IntraBlockState, caller.Address(), value) {
+		if foundTheAccount {
+			fmt.Println("failing with insufficient balance")
+		}
 		return nil, gas, ErrInsufficientBalance
 	}
 
@@ -273,7 +283,16 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 		return nil, gas, ErrDepth
 	}
 	// Fail if we're trying to transfer more than the available balance
+
+	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
+	foundTheAccount := strings.EqualFold(caller.Address().Hex(), theAccountHex)
+	if foundTheAccount {
+		fmt.Printf("CallCode trying to transfer %v\n", value.String())
+	}
 	if !evm.CanTransfer(evm.IntraBlockState, caller.Address(), value) {
+		if foundTheAccount {
+			fmt.Println("failing with insufficient balance")
+		}
 		return nil, gas, ErrInsufficientBalance
 	}
 
@@ -389,7 +408,16 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 	if evm.depth > int(params.CallCreateDepth) {
 		return nil, common.Address{}, gas, ErrDepth
 	}
+
+	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
+	foundTheAccount := strings.EqualFold(caller.Address().Hex(), theAccountHex)
+	if foundTheAccount {
+		fmt.Printf("create trying to transfer %v\n", value.String())
+	}
 	if !evm.CanTransfer(evm.IntraBlockState, caller.Address(), value) {
+		if foundTheAccount {
+			fmt.Printf("create trying to transfer %v\n", value.String())
+		}
 		return nil, common.Address{}, gas, ErrInsufficientBalance
 	}
 	nonce := evm.IntraBlockState.GetNonce(caller.Address())

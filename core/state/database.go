@@ -895,7 +895,7 @@ func (tds *TrieDbState) ReadAccountData(address common.Address) (*accounts.Accou
 	}
 	acc, err := tds.readAccountDataByHash(addrHash)
 	if foundTheAccount {
-		fmt.Printf("The Account Balance: %v", acc.Balance.String())
+		fmt.Printf("The Account Balance: %v\n", acc.Balance.String())
 	}
 	return acc, err
 }
