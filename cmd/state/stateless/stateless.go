@@ -47,24 +47,24 @@ func runBlock(dbstate *state.Stateless, chainConfig *params.ChainConfig,
 	for _, tx := range block.Transactions() {
 		receipt, err := core.ApplyTransaction(chainConfig, bcb, nil, gp, statedb, dbstate, header, tx, usedGas, vmConfig)
 		if err != nil {
-			return fmt.Errorf("tx %x failed: %v", tx.Hash(), err)
+			return fmt.Errorf("runBlock/witness tx %x failed: %v", tx.Hash(), err)
 		}
 		receipts = append(receipts, receipt)
 	}
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 	if _, err := engine.FinalizeAndAssemble(chainConfig, header, statedb, block.Transactions(), block.Uncles(), receipts); err != nil {
-		return fmt.Errorf("finalize of block %d failed: %v", block.NumberU64(), err)
+		return fmt.Errorf("runBlock/witness finalize of block %d failed: %v", block.NumberU64(), err)
 	}
 	dbstate.SetBlockNr(block.NumberU64())
 
 	ctx := chainConfig.WithEIPsFlags(context.Background(), header.Number)
 	if err := statedb.CommitBlock(ctx, dbstate); err != nil {
-		return fmt.Errorf("commiting block %d failed: %v", block.NumberU64(), err)
+		return fmt.Errorf("runBlock/witness commiting block %d failed: %v", block.NumberU64(), err)
 	}
 	if checkRoot {
 		if err := dbstate.CheckRoot(header.Root); err != nil {
 			fmt.Printf("block hash = %x\n", block.Hash())
-			return fmt.Errorf("error processing block %d: %v", block.NumberU64(), err)
+			return fmt.Errorf("runBlock/witness error processing block %d: %v", block.NumberU64(), err)
 		}
 	}
 	return nil
@@ -177,7 +177,7 @@ func Stateless(
 			statedb.Prepare(tx.Hash(), block.Hash(), i)
 			receipt, err := core.ApplyTransaction(chainConfig, bcb, nil, gp, statedb, tds.TrieStateWriter(), header, tx, usedGas, vmConfig)
 			if err != nil {
-				fmt.Printf("tx %x failed: %v\n", tx.Hash(), err)
+				fmt.Printf("initial run tx %x failed: %v\n", tx.Hash(), err)
 				return
 			}
 			if !chainConfig.IsByzantium(header.Number) {
@@ -294,9 +294,9 @@ func Stateless(
 			tds.PruneTries(false)
 		}
 
-		if blockNum%1000 == 0 {
-			tds.PruneTries(false)
-		}
+		//if blockNum%1000 == 0 {
+		//	tds.PruneTries(false)
+		//}
 
 		if willSnapshot {
 			// Snapshots of the state will be written to the same directory as the state file
