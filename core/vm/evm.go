@@ -201,7 +201,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
 	foundTheAccount := strings.EqualFold(caller.Address().Hex(), theAccountHex)
 	if foundTheAccount {
-		fmt.Printf("Call / trying to transfer %v\n", value.String())
+		fmt.Printf("Call / trying to transfer block=%v, gas=%v value=%v\n", evm.BlockNumber, gas, value.String())
 	}
 	if !evm.Context.CanTransfer(evm.IntraBlockState, caller.Address(), value) {
 		if foundTheAccount {
@@ -287,7 +287,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
 	foundTheAccount := strings.EqualFold(caller.Address().Hex(), theAccountHex)
 	if foundTheAccount {
-		fmt.Printf("CallCode trying to transfer %v\n", value.String())
+		fmt.Printf("CallCode / trying to transfer block=%v, gas=%v value=%v\n", evm.BlockNumber, gas, value.String())
 	}
 	if !evm.CanTransfer(evm.IntraBlockState, caller.Address(), value) {
 		if foundTheAccount {
@@ -412,7 +412,7 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
 	foundTheAccount := strings.EqualFold(caller.Address().Hex(), theAccountHex)
 	if foundTheAccount {
-		fmt.Printf("create trying to transfer %v\n", value.String())
+		fmt.Printf("create / trying to transfer block=%v, gas=%v value=%v\n", evm.BlockNumber, gas, value.String())
 	}
 	if !evm.CanTransfer(evm.IntraBlockState, caller.Address(), value) {
 		if foundTheAccount {

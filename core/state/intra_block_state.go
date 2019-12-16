@@ -470,6 +470,7 @@ func (sdb *IntraBlockState) AddBalance(addr common.Address, amount *big.Int) {
 	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
 	foundTheAccount := strings.EqualFold(addr.Hex(), theAccountHex)
 	if foundTheAccount {
+		fmt.Printf("bHash=%s txIndex=%d tHash=%s\n", sdb.bhash.Hex(), sdb.txIndex, sdb.thash.Hex())
 		fmt.Printf("AddBalance the account balance to: %v\n", amount.String())
 	}
 
