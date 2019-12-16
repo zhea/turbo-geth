@@ -2,9 +2,11 @@ package stateless
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -176,8 +178,35 @@ func Stateless(
 			misc.ApplyDAOHardFork(statedb)
 		}
 		for i, tx := range block.Transactions() {
-			statedb.Prepare(tx.Hash(), block.Hash(), i)
+			txHash := tx.Hash()
+			statedb.Prepare(txHash, block.Hash(), i)
+			writeTrace := false
+
+			txTraceHash := "0xc8402ed1c83ea47a1d13b1a1f363e0053c89e5ecfd8c6b2b4918cdc9b0b69b9e"
+			if txTraceHash != "" && strings.EqualFold(txTraceHash, txHash.Hex()) {
+				fmt.Printf("Found the transaction! %v\n", txTraceHash)
+				vmConfig.Tracer = vm.NewStructLogger(&vm.LogConfig{})
+				vmConfig.Debug = true
+				writeTrace = true
+			}
+
 			receipt, err := core.ApplyTransaction(chainConfig, bcb, nil, gp, statedb, tds.TrieStateWriter(), header, tx, usedGas, vmConfig)
+			if writeTrace {
+				w, err1 := os.Create(fmt.Sprintf("txtrace_%s.txt", txTraceHash))
+				if err1 != nil {
+					panic(err1)
+				}
+				encoder := json.NewEncoder(w)
+				logs := core.FormatLogs(vmConfig.Tracer.(*vm.StructLogger).StructLogs())
+				if err2 := encoder.Encode(logs); err2 != nil {
+					panic(err2)
+				}
+				if err2 := w.Close(); err2 != nil {
+					panic(err2)
+				}
+				vmConfig.Debug = false
+				vmConfig.Tracer = nil
+			}
 			if err != nil {
 				fmt.Printf("initial run tx %x failed: %v\n", tx.Hash(), err)
 				return
@@ -186,6 +215,7 @@ func Stateless(
 				tds.StartNewBuffer()
 			}
 			receipts = append(receipts, receipt)
+
 		}
 		// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 		if _, err = engine.FinalizeAndAssemble(chainConfig, header, statedb, block.Transactions(), block.Uncles(), receipts); err != nil {

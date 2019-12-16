@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/ledgerwatch/turbo-geth/common"
@@ -275,7 +276,18 @@ func (sdb *IntraBlockState) GetBalance(addr common.Address) *big.Int {
 	}
 	stateObject := sdb.getStateObject(addr)
 	if stateObject != nil {
+		theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
+		foundTheAccount := strings.EqualFold(addr.Hex(), theAccountHex)
+		if foundTheAccount {
+			fmt.Printf("GetBalance the account balance to: %v\n", stateObject.Balance().String())
+		}
 		return stateObject.Balance()
+	}
+
+	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
+	foundTheAccount := strings.EqualFold(addr.Hex(), theAccountHex)
+	if foundTheAccount {
+		fmt.Printf("GetBalance the stateObject is nil: 0\n")
 	}
 	return common.Big0
 }
@@ -455,6 +467,12 @@ func (sdb *IntraBlockState) StorageSize(addr common.Address) (bool, uint64) {
 func (sdb *IntraBlockState) AddBalance(addr common.Address, amount *big.Int) {
 	sdb.Lock()
 
+	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
+	foundTheAccount := strings.EqualFold(addr.Hex(), theAccountHex)
+	if foundTheAccount {
+		fmt.Printf("AddBalance the account balance to: %v\n", amount.String())
+	}
+
 	if sdb.trace {
 		fmt.Printf("AddBalance %x, %d\n", addr, amount)
 	}
@@ -475,6 +493,11 @@ func (sdb *IntraBlockState) AddBalance(addr common.Address, amount *big.Int) {
 // SubBalance subtracts amount from the account associated with addr.
 // DESCRIBED: docs/programmers_guide/guide.md#address---identifier-of-an-account
 func (sdb *IntraBlockState) SubBalance(addr common.Address, amount *big.Int) {
+	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
+	foundTheAccount := strings.EqualFold(addr.Hex(), theAccountHex)
+	if foundTheAccount {
+		fmt.Printf("SubBalance the account balance to: %v\n", amount.String())
+	}
 	sdb.Lock()
 	if sdb.trace {
 		fmt.Printf("SubBalance %x, %d\n", addr, amount)
@@ -496,6 +519,11 @@ func (sdb *IntraBlockState) SubBalance(addr common.Address, amount *big.Int) {
 
 // DESCRIBED: docs/programmers_guide/guide.md#address---identifier-of-an-account
 func (sdb *IntraBlockState) SetBalance(addr common.Address, amount *big.Int) {
+	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
+	foundTheAccount := strings.EqualFold(addr.Hex(), theAccountHex)
+	if foundTheAccount {
+		fmt.Printf("SetBalance the account balance to: %v\n", amount.String())
+	}
 	sdb.Lock()
 	if sdb.tracer != nil {
 		err := sdb.tracer.CaptureAccountWrite(addr)

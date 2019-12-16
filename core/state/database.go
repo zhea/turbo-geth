@@ -24,6 +24,7 @@ import (
 	"io"
 	"runtime"
 	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -878,6 +879,11 @@ func (tds *TrieDbState) readAccountDataByHash(addrHash common.Hash) (*accounts.A
 }
 
 func (tds *TrieDbState) ReadAccountData(address common.Address) (*accounts.Account, error) {
+	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
+	foundTheAccount := strings.EqualFold(address.Hex(), theAccountHex)
+	if foundTheAccount {
+		fmt.Printf("ReadAccountData = %s\n", address.Hex())
+	}
 	addrHash, err := common.HashData(address[:])
 	if err != nil {
 		return nil, err
@@ -887,7 +893,11 @@ func (tds *TrieDbState) ReadAccountData(address common.Address) (*accounts.Accou
 			tds.currentBuffer.accountReads[addrHash] = struct{}{}
 		}
 	}
-	return tds.readAccountDataByHash(addrHash)
+	acc, err := tds.readAccountDataByHash(addrHash)
+	if foundTheAccount {
+		fmt.Printf("The Account Balance: %v", acc.Balance.String())
+	}
+	return acc, err
 }
 
 func (tds *TrieDbState) savePreimage(save bool, hash, preimage []byte) error {
