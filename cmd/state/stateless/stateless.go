@@ -151,6 +151,8 @@ func Stateless(
 	processed := 0
 	blockProcessingStartTime := time.Now()
 
+	defer func() { fmt.Printf("ended on block %d\n", blockNum) }()
+
 	for !interrupt {
 		//	if blockNum > 6 {
 		//		fmt.Println("ENOUGH")
