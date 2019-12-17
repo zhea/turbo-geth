@@ -21,7 +21,10 @@ import (
 	//"encoding/json"
 	//"bytes"
 
+	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 
 	"context"
 
@@ -128,8 +131,37 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.IntraBlockSt
 	// Iterate over and process the individual transactions
 	tds.StartNewBuffer()
 	for i, tx := range block.Transactions() {
-		statedb.Prepare(tx.Hash(), block.Hash(), i)
+		txHash := tx.Hash()
+		statedb.Prepare(txHash, block.Hash(), i)
+		writeTrace := false
+
+		txTraceHash := "0x91856db70a344a27e450e240d105b7055dec57c6609b8206e732f7c5367"
+		if txTraceHash != "" && strings.EqualFold(txTraceHash, txHash.Hex()) {
+			fmt.Printf("Found the transaction! %v\n", txTraceHash)
+			cfg.Tracer = vm.NewStructLogger(&vm.LogConfig{})
+			cfg.Debug = true
+			writeTrace = true
+		}
+
 		receipt, err := ApplyTransaction(p.config, p.bc, nil, gp, statedb, tds.TrieStateWriter(), header, tx, usedGas, cfg)
+		if writeTrace {
+			w, err1 := os.Create(fmt.Sprintf("txtrace_state_proc_%s.txt", txTraceHash))
+			if err1 != nil {
+				panic(err1)
+			}
+			encoder := json.NewEncoder(w)
+			logs := FormatLogs(cfg.Tracer.(*vm.StructLogger).StructLogs())
+			if err2 := encoder.Encode(logs); err2 != nil {
+				panic(err2)
+			}
+			if err2 := w.Close(); err2 != nil {
+				panic(err2)
+			}
+			fmt.Println("wrote logs state_proc")
+			cfg.Debug = false
+			cfg.Tracer = nil
+		}
+
 		if err != nil {
 			return nil, nil, 0, err
 		}

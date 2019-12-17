@@ -182,7 +182,7 @@ func Stateless(
 			statedb.Prepare(txHash, block.Hash(), i)
 			writeTrace := false
 
-			txTraceHash := "0xc8402ed1c83ea47a1d13b1a1f363e0053c89e5ecfd8c6b2b4918cdc9b0b69b9e"
+			txTraceHash := "0x91856db70a344a27e450e240d105b7055dec57c6609b8206e732f7c5367"
 			if txTraceHash != "" && strings.EqualFold(txTraceHash, txHash.Hex()) {
 				fmt.Printf("Found the transaction! %v\n", txTraceHash)
 				vmConfig.Tracer = vm.NewStructLogger(&vm.LogConfig{})
@@ -192,7 +192,7 @@ func Stateless(
 
 			receipt, err := core.ApplyTransaction(chainConfig, bcb, nil, gp, statedb, tds.TrieStateWriter(), header, tx, usedGas, vmConfig)
 			if writeTrace {
-				w, err1 := os.Create(fmt.Sprintf("txtrace_%s.txt", txTraceHash))
+				w, err1 := os.Create(fmt.Sprintf("txtrace_stateless_%s.txt", txTraceHash))
 				if err1 != nil {
 					panic(err1)
 				}
@@ -206,6 +206,7 @@ func Stateless(
 				}
 				vmConfig.Debug = false
 				vmConfig.Tracer = nil
+				fmt.Println("wrote logs stateless")
 			}
 			if err != nil {
 				fmt.Printf("initial run tx %x failed: %v\n", tx.Hash(), err)
