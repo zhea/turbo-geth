@@ -135,7 +135,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.IntraBlockSt
 		statedb.Prepare(txHash, block.Hash(), i)
 		writeTrace := false
 
-		txTraceHash := "0x91856db70a344a27e450e240d105b7055dec57c6609b8206e732f7c5367"
+		txTraceHash := "0x91856db70a344a27e450e240d105b7055dec57c6609b8206e732f7c5367e6875"
 		if txTraceHash != "" && strings.EqualFold(txTraceHash, txHash.Hex()) {
 			fmt.Printf("Found the transaction! %v\n", txTraceHash)
 			cfg.Tracer = vm.NewStructLogger(&vm.LogConfig{})
