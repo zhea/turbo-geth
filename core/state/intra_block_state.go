@@ -383,10 +383,18 @@ func (sdb *IntraBlockState) GetCodeHash(addr common.Address) common.Hash {
 func (sdb *IntraBlockState) GetState(addr common.Address, hash common.Hash) common.Hash {
 	sdb.Lock()
 	defer sdb.Unlock()
+	foundContract := strings.EqualFold(addr.Hex(), "0x36770fF967bD05248B1c4c899FfB70caa3391b84")
 
 	stateObject := sdb.getStateObject(addr)
 	if stateObject != nil {
-		return stateObject.GetState(hash)
+		result := stateObject.GetState(hash)
+		if foundContract {
+			fmt.Printf("TheContract != nil GetState(%s) = %s\n", hash.Hex(), result.Hex())
+		}
+		return result
+	}
+	if foundContract {
+		fmt.Printf("TheContract != nil GetState(%s) = EmptyHash\n", hash.Hex())
 	}
 	return common.Hash{}
 }
@@ -686,29 +694,48 @@ func (sdb *IntraBlockState) changeStorageSize(addr common.Address, sizeDiff int6
 // Retrieve a state object given my the address. Returns nil if not found.
 func (sdb *IntraBlockState) getStateObject(addr common.Address) (stateObject *stateObject) {
 	// Prefer 'live' objects.
+	foundContract := strings.EqualFold(addr.Hex(), "0x36770fF967bD05248B1c4c899FfB70caa3391b84")
 	if obj := sdb.stateObjects[addr]; obj != nil {
 		if obj.deleted {
+			if foundContract {
+				fmt.Println("the contract was deleted, return nil")
+			}
 			return nil
+		}
+		if foundContract {
+			fmt.Println("the contract found in the live objects")
 		}
 		return obj
 	}
 
 	// Load the object from the database.
 	if _, ok := sdb.nilAccounts[addr]; ok {
+		if foundContract {
+			fmt.Println("the contract is in nil accounts, return nil")
+		}
 		return nil
 	}
 	account, err := sdb.stateReader.ReadAccountData(addr)
 	if err != nil {
+		if foundContract {
+			fmt.Printf("the contract: error while reading data, return nil: err=%v\n", err)
+		}
 		sdb.setError(err)
 		return nil
 	}
 	if account == nil {
 		sdb.nilAccounts[addr] = struct{}{}
+		if foundContract {
+			fmt.Printf("the contract read as nil, adding to the nil accounts and return nil\n")
+		}
 		return nil
 	}
 	// Insert into the live set.
 	obj := newObject(sdb, addr, account, account)
 	sdb.setStateObject(obj)
+	if foundContract {
+		fmt.Printf("the contract is ok, returning acc: codeHash=%x root=%x\n", account.CodeHash, account.Root)
+	}
 	return obj
 }
 
