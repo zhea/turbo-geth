@@ -107,7 +107,14 @@ func (t *Trie) Get(key []byte) (value []byte, gotValue bool) {
 }
 
 func (t *Trie) GetAccount(key []byte) (value *accounts.Account, gotValue bool) {
+	contractAddress := common.HexToAddress("0x36770fF967bD05248B1c4c899FfB70caa3391b84")
+	contractKey, _ := common.HashData(contractAddress[:])
+	foundContract := bytes.Equal(key, contractKey[:])
+
 	if t.root == nil {
+		if foundContract {
+			fmt.Print("Trie#GetAccount: t.root == nil, returning nil, skip DB search")
+		}
 		return nil, true
 	}
 
@@ -116,7 +123,7 @@ func (t *Trie) GetAccount(key []byte) (value *accounts.Account, gotValue bool) {
 		hex = keyHexToBin(hex)
 	}
 
-	accNode, gotValue := t.getAccount(t.root, hex, 0)
+	accNode, gotValue := t.getAccount(t.root, hex, 0, foundContract)
 	if accNode != nil {
 		var value accounts.Account
 		value.Copy(&accNode.Account)
@@ -125,19 +132,23 @@ func (t *Trie) GetAccount(key []byte) (value *accounts.Account, gotValue bool) {
 	return nil, gotValue
 }
 
-func (t *Trie) getAccount(origNode node, key []byte, pos int) (value *accountNode, gotValue bool) {
+func (t *Trie) getAccount(origNode node, key []byte, pos int, trace bool) (value *accountNode, gotValue bool) {
 	switch n := (origNode).(type) {
 	case nil:
+		fmt.Printf("Trie#getAccount(key=%v pos=%d), nil node, returning nil, true\n", key, pos)
 		return nil, true
 	case *shortNode:
 		matchlen := prefixLen(key[pos:], n.Key)
 		if matchlen == len(n.Key) {
 			if v, ok := n.Val.(*accountNode); ok {
+				fmt.Printf("Trie#getAccount(key=%v pos=%d), found in shortnode! returning %T, true\n", key, pos, v)
+				fmt.Printf("\tacc storage=%+v\n", v.storage)
 				return v, true
 			} else {
-				return t.getAccount(n.Val, key, pos+matchlen)
+				return t.getAccount(n.Val, key, pos+matchlen, trace)
 			}
 		} else {
+			fmt.Printf("Trie#getAccount(key=%v pos=%d), matchlen != len(n.Key), returning nil, true\n", key, pos)
 			return nil, true
 		}
 	case *duoNode:
@@ -145,20 +156,23 @@ func (t *Trie) getAccount(origNode node, key []byte, pos int) (value *accountNod
 		i1, i2 := n.childrenIdx()
 		switch key[pos] {
 		case i1:
-			return t.getAccount(n.child1, key, pos+1)
+			return t.getAccount(n.child1, key, pos+1, trace)
 		case i2:
-			return t.getAccount(n.child2, key, pos+1)
+			return t.getAccount(n.child2, key, pos+1, trace)
 		default:
+			fmt.Printf("Trie#getAccount(key=%v pos=%d),duonode wrong(want %v/%v, got %v)->nil, true\n", key, pos, i1, i2, key[pos])
 			return nil, true
 		}
 	case *fullNode:
 		t.touchFunc(key[:pos], false)
 		child := n.Children[key[pos]]
-		return t.getAccount(child, key, pos+1)
+		return t.getAccount(child, key, pos+1, trace)
 	case hashNode:
+		fmt.Printf("Trie#getAccount(key=%v pos=%d),hashnode(%s)->nil, true\n", key, pos, n.fstring(""))
 		return nil, false
-
 	case *accountNode:
+		fmt.Printf("Trie#getAccount(key=%v pos=%d), found by itself! returning %T, true\n", key, pos, n)
+		fmt.Printf("\tacc storage=%+v\n", n.storage)
 		return n, true
 	default:
 		panic(fmt.Sprintf("%T: invalid node: %v", origNode, origNode))
@@ -1141,7 +1155,7 @@ func (t *Trie) DeepHash(keyPrefix []byte) (bool, common.Hash) {
 	if t.binary {
 		hexPrefix = keyHexToBin(hexPrefix)
 	}
-	accNode, gotValue := t.getAccount(t.root, hexPrefix, 0)
+	accNode, gotValue := t.getAccount(t.root, hexPrefix, 0, false)
 	if !gotValue {
 		return false, common.Hash{}
 	}

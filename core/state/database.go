@@ -881,7 +881,8 @@ func (tds *TrieDbState) readAccountDataByHash(addrHash common.Hash) (*accounts.A
 func (tds *TrieDbState) ReadAccountData(address common.Address) (*accounts.Account, error) {
 	theAccountHex := "0x00e6F031D7be9ad7702385A5DC0DF7bD70eB1f91"
 	foundTheAccount := strings.EqualFold(address.Hex(), theAccountHex)
-	if foundTheAccount {
+	foundTheContract := strings.EqualFold(address.Hex(), "0x36770fF967bD05248B1c4c899FfB70caa3391b84")
+	if foundTheAccount || foundTheContract {
 		fmt.Printf("ReadAccountData = %s\n", address.Hex())
 	}
 	addrHash, err := common.HashData(address[:])
@@ -896,6 +897,9 @@ func (tds *TrieDbState) ReadAccountData(address common.Address) (*accounts.Accou
 	acc, err := tds.readAccountDataByHash(addrHash)
 	if foundTheAccount {
 		fmt.Printf("The Account Balance: %v\n", acc.Balance.String())
+	}
+	if foundTheContract {
+		fmt.Printf("TrieDbState#ReadAccountData -> acc=%T err=%v\n", acc, err)
 	}
 	return acc, err
 }
