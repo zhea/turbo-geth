@@ -135,20 +135,26 @@ func (t *Trie) GetAccount(key []byte) (value *accounts.Account, gotValue bool) {
 func (t *Trie) getAccount(origNode node, key []byte, pos int, trace bool) (value *accountNode, gotValue bool) {
 	switch n := (origNode).(type) {
 	case nil:
-		fmt.Printf("Trie#getAccount(key=%v pos=%d), nil node, returning nil, true\n", key, pos)
+		if trace {
+			fmt.Printf("Trie#getAccount(key=%v pos=%d), nil node, returning nil, true\n", key, pos)
+		}
 		return nil, true
 	case *shortNode:
 		matchlen := prefixLen(key[pos:], n.Key)
 		if matchlen == len(n.Key) {
 			if v, ok := n.Val.(*accountNode); ok {
-				fmt.Printf("Trie#getAccount(key=%v pos=%d), found in shortnode! returning %T, true\n", key, pos, v)
-				fmt.Printf("\tacc storage=%+v\n", v.storage)
+				if trace {
+					fmt.Printf("Trie#getAccount(key=%v pos=%d), found in shortnode! returning %T, true\n", key, pos, v)
+					fmt.Printf("\tacc storage=%+v\n", v.storage)
+				}
 				return v, true
 			} else {
 				return t.getAccount(n.Val, key, pos+matchlen, trace)
 			}
 		} else {
-			fmt.Printf("Trie#getAccount(key=%v pos=%d), matchlen != len(n.Key), returning nil, true\n", key, pos)
+			if trace {
+				fmt.Printf("Trie#getAccount(key=%v pos=%d), matchlen != len(n.Key), returning nil, true\n", key, pos)
+			}
 			return nil, true
 		}
 	case *duoNode:
@@ -160,7 +166,9 @@ func (t *Trie) getAccount(origNode node, key []byte, pos int, trace bool) (value
 		case i2:
 			return t.getAccount(n.child2, key, pos+1, trace)
 		default:
-			fmt.Printf("Trie#getAccount(key=%v pos=%d),duonode wrong(want %v/%v, got %v)->nil, true\n", key, pos, i1, i2, key[pos])
+			if trace {
+				fmt.Printf("Trie#getAccount(key=%v pos=%d),duonode wrong(want %v/%v, got %v)->nil, true\n", key, pos, i1, i2, key[pos])
+			}
 			return nil, true
 		}
 	case *fullNode:
@@ -168,11 +176,15 @@ func (t *Trie) getAccount(origNode node, key []byte, pos int, trace bool) (value
 		child := n.Children[key[pos]]
 		return t.getAccount(child, key, pos+1, trace)
 	case hashNode:
-		fmt.Printf("Trie#getAccount(key=%v pos=%d),hashnode(%s)->nil, true\n", key, pos, n.fstring(""))
+		if trace {
+			fmt.Printf("Trie#getAccount(key=%v pos=%d),hashnode(%s)->nil, true\n", key, pos, n.fstring(""))
+		}
 		return nil, false
 	case *accountNode:
-		fmt.Printf("Trie#getAccount(key=%v pos=%d), found by itself! returning %T, true\n", key, pos, n)
-		fmt.Printf("\tacc storage=%+v\n", n.storage)
+		if trace {
+			fmt.Printf("Trie#getAccount(key=%v pos=%d), found by itself! returning %T, true\n", key, pos, n)
+			fmt.Printf("\tacc storage=%+v\n", n.storage)
+		}
 		return n, true
 	default:
 		panic(fmt.Sprintf("%T: invalid node: %v", origNode, origNode))
