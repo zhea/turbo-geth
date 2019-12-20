@@ -231,6 +231,10 @@ func (tr *Resolver) finaliseRoot() error {
 				fmt.Printf("%v\n", err)
 				return nil
 			}
+			if err != nil {
+				fmt.Printf("ignoring error: %v", err)
+				err = nil
+			}
 			return err
 		}
 	}
