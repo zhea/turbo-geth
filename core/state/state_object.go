@@ -129,7 +129,7 @@ func newObject(db *IntraBlockState, address common.Address, data, original *acco
 
 	foundTheContract := strings.EqualFold(address.Hex(), "0x36770fF967bD05248B1c4c899FfB70caa3391b84")
 	if foundTheContract {
-		fmt.Printf("stateObject#newObject -> data.Root=%v\n", so.data.Root)
+		fmt.Printf("stateObject#newObject -> data.Root=%x\n", so.data.Root)
 	}
 
 	return &so
