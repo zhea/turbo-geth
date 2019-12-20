@@ -900,6 +900,7 @@ func (tds *TrieDbState) ReadAccountData(address common.Address) (*accounts.Accou
 	}
 	if foundTheContract {
 		fmt.Printf("TrieDbState#ReadAccountData -> acc=%T err=%v\n", acc, err)
+		fmt.Printf("\trootHash-> %v\n", acc.Root.Hex())
 	}
 	return acc, err
 }
@@ -938,21 +939,35 @@ func (tds *TrieDbState) GetKey(shaKey []byte) []byte {
 }
 
 func (tds *TrieDbState) ReadAccountStorage(address common.Address, incarnation uint64, key *common.Hash) ([]byte, error) {
+	foundTheContract := strings.EqualFold(address.Hex(), "0x36770fF967bD05248B1c4c899FfB70caa3391b84")
+	if foundTheContract {
+		fmt.Printf("TrieDbState#ReadAccountStorage -> addr=%d\n", address.Hex())
+	}
 	addrHash, err := tds.HashAddress(address, false /*save*/)
 	if err != nil {
 		return nil, err
 	}
 	if tds.currentBuffer != nil {
 		if _, ok := tds.currentBuffer.deleted[addrHash]; ok {
+			if foundTheContract {
+				fmt.Printf("TrieDbState#ReadAccountStorage -> deleted[currentBuffer] -> nil, nil\n")
+			}
 			return nil, nil
 		}
 	}
 	if tds.aggregateBuffer != nil {
 		if _, ok := tds.aggregateBuffer.deleted[addrHash]; ok {
+			if foundTheContract {
+				fmt.Printf("TrieDbState#ReadAccountStorage -> deleted[aggregateBuffer] -> nil, nil\n")
+			}
 			return nil, nil
 		}
 	}
 	seckey, err := tds.HashKey(key, false /*save*/)
+	if foundTheContract {
+		fmt.Printf("TrieDbState#ReadAccountStorage -> seckey=%v\n", seckey)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -978,6 +993,9 @@ func (tds *TrieDbState) ReadAccountStorage(address common.Address, incarnation u
 
 	tds.tMu.Lock()
 	enc, ok := tds.t.Get(dbutils.GenerateCompositeTrieKey(addrHash, seckey))
+	if foundTheContract {
+		fmt.Printf("TrieDbState#ReadAccountStorage -> tds.t.Get() -> ok=%v enc=%v\n", ok, enc)
+	}
 	defer tds.tMu.Unlock()
 	if !ok {
 		// Not present in the trie, try database
@@ -988,8 +1006,12 @@ func (tds *TrieDbState) ReadAccountStorage(address common.Address, incarnation u
 			}
 		} else {
 			enc, err = tds.db.Get(dbutils.StorageBucket, dbutils.GenerateCompositeStorageKey(addrHash, incarnation, seckey))
+
 			if err != nil {
 				enc = nil
+			}
+			if foundTheContract {
+				fmt.Printf("TrieDbState#ReadAccountStorage -> tds.db.Get() -> enc=%v, err=%v\n", enc, err)
 			}
 		}
 	}

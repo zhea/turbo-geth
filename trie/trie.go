@@ -177,7 +177,7 @@ func (t *Trie) getAccount(origNode node, key []byte, pos int, trace bool) (value
 		return t.getAccount(child, key, pos+1, trace)
 	case hashNode:
 		if trace {
-			fmt.Printf("Trie#getAccount(key=%v pos=%d),hashnode(%s)->nil, true\n", key, pos, n.fstring(""))
+			fmt.Printf("Trie#getAccount(key=%v pos=%d),hashnode(%s)->nil, false\n", key, pos, n.fstring(""))
 		}
 		return nil, false
 	case *accountNode:
@@ -192,10 +192,19 @@ func (t *Trie) getAccount(origNode node, key []byte, pos int, trace bool) (value
 }
 
 func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, gotValue bool) {
+	contractAddress := common.HexToAddress("0x36770fF967bD05248B1c4c899FfB70caa3391b84")
+	contractKey, _ := common.HashData(contractAddress[:])
+	trace := bytes.Equal(key, contractKey[:])
 	switch n := (origNode).(type) {
 	case nil:
+		if trace {
+			fmt.Printf("Trie#get(key=%v pos=%d), nil node, returning nil, true\n", key, pos)
+		}
 		return nil, true
 	case valueNode:
+		if trace {
+			fmt.Printf("Trie#get(key=%v pos=%d), value node, returning %v, true\n", key, pos, n)
+		}
 		return n, true
 	case *accountNode:
 		return t.get(n.storage, key, pos)
@@ -204,6 +213,9 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, gotValue b
 		if matchlen == len(n.Key) || n.Key[matchlen] == 16 {
 			value, gotValue = t.get(n.Val, key, pos+matchlen)
 		} else {
+			if trace {
+				fmt.Printf("Trie#get(key=%v pos=%d), short node, matchlen, returning nil, true\n", key, pos)
+			}
 			value, gotValue = nil, true
 		}
 		return
@@ -216,6 +228,9 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, gotValue b
 		case i2:
 			value, gotValue = t.get(n.child2, key, pos+1)
 		default:
+			if trace {
+				fmt.Printf("Trie#get(key=%v pos=%d), duonode, indices, returning nil, true\n", key, pos)
+			}
 			value, gotValue = nil, true
 		}
 		return
@@ -223,10 +238,16 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, gotValue b
 		t.touchFunc(key[:pos], false)
 		child := n.Children[key[pos]]
 		if child == nil {
+			if trace {
+				fmt.Printf("Trie#get(key=%v pos=%d), full node, child==nil, returning nil, true\n", key, pos)
+			}
 			return nil, true
 		}
 		return t.get(child, key, pos+1)
 	case hashNode:
+		if trace {
+			fmt.Printf("Trie#get(key=%v pos=%d), hash node, returning %v, false\n", key, pos, n.fstring(""))
+		}
 		return n, false
 
 	default:

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"strings"
 
 	"github.com/ledgerwatch/turbo-geth/common"
 	"github.com/ledgerwatch/turbo-geth/core/types/accounts"
@@ -126,6 +127,11 @@ func newObject(db *IntraBlockState, address common.Address, data, original *acco
 	}
 	so.original.Copy(original)
 
+	foundTheContract := strings.EqualFold(address.Hex(), "0x36770fF967bD05248B1c4c899FfB70caa3391b84")
+	if foundTheContract {
+		fmt.Printf("stateObject#newObject -> data.Root=%v\n", so.data.Root)
+	}
+
 	return &so
 }
 
@@ -158,23 +164,37 @@ func (so *stateObject) touch() {
 
 // GetState returns a value from account storage.
 func (so *stateObject) GetState(key common.Hash) common.Hash {
+	foundTheContract := strings.EqualFold(so.address.Hex(), "0x36770fF967bD05248B1c4c899FfB70caa3391b84")
 	value, dirty := so.dirtyStorage[key]
 	if dirty {
+		if foundTheContract {
+			fmt.Printf("stateObject#GetState -> dirtyStorage=%v\n", value)
+		}
 		return value
 	}
 	// Otherwise return the entry's original value
+	if foundTheContract {
+		fmt.Printf("stateObject#GetState -> GetCommittedState\n")
+	}
 	return so.GetCommittedState(key)
 }
 
 // GetCommittedState retrieves a value from the committed account storage trie.
 func (so *stateObject) GetCommittedState(key common.Hash) common.Hash {
+	foundTheContract := strings.EqualFold(so.address.Hex(), "0x36770fF967bD05248B1c4c899FfB70caa3391b84")
 	if so.created {
+		if foundTheContract {
+			fmt.Printf("stateObject#GetCommittedState -> so.created -> common.Hash{}\n")
+		}
 		return common.Hash{}
 	}
 	// If we have the original value cached, return that
 	{
 		value, cached := so.originStorage[key]
 		if cached {
+			if foundTheContract {
+				fmt.Printf("stateObject#GetCommittedState -> so.originStorage -> %v\n", value)
+			}
 			return value
 		}
 	}
@@ -182,6 +202,9 @@ func (so *stateObject) GetCommittedState(key common.Hash) common.Hash {
 	enc, err := so.db.stateReader.ReadAccountStorage(so.address, so.data.GetIncarnation(), &key)
 	if err != nil {
 		so.setError(err)
+		if foundTheContract {
+			fmt.Printf("stateObject#GetCommittedState -> so.stateReader -> err=%v\n", err)
+		}
 		return common.Hash{}
 	}
 	var value common.Hash
@@ -190,6 +213,10 @@ func (so *stateObject) GetCommittedState(key common.Hash) common.Hash {
 	}
 	so.originStorage[key] = value
 	so.blockOriginStorage[key] = value
+
+	if foundTheContract {
+		fmt.Printf("stateObject#GetCommittedState -> return value=%v\n", value)
+	}
 	return value
 }
 
