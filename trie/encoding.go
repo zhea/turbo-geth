@@ -47,7 +47,7 @@ func hexToCompact(hex []byte) []byte {
 		terminator = 1
 		hex = hex[:len(hex)-1]
 	}
-	buf := make([]byte, len(hex)/2+1)
+	buf := make([]byte, len(hex)/8+1+1)
 	buf[0] = terminator << 5 // the flag byte
 	if len(hex)&1 == 1 {
 		buf[0] |= 1 << 4 // odd flag
@@ -66,7 +66,7 @@ func compactToHex(compact []byte) []byte {
 	if len(compact) == 0 {
 		return compact
 	}
-	base := keybytesToHex(compact)
+	base := keyHexToBin(keybytesToHex(compact))
 	// delete terminator flag
 	if base[0] < 2 {
 		base = base[:len(base)-1]

@@ -70,37 +70,7 @@ func (hb *HashBuilder) leaf(length int, keyHex []byte, val RlpSerializable) erro
 func (hb *HashBuilder) leafHashWithKeyVal(key []byte, val RlpSerializable) error {
 	var hash [hashStackStride]byte // RLP representation of hash (or of un-hashed value if short)
 	// Compute the total length of binary representation
-	var keyPrefix [1]byte
-	var lenPrefix [4]byte
-	var kp, kl int
-	// Write key
-	var compactLen int
-	var ni int
-	var compact0 byte
-	if hasTerm(key) {
-		compactLen = (len(key)-1)/8 + 1
-		if len(key)&1 == 0 {
-			compact0 = 0x30 + key[0] // Odd: (3<<4) + first nibble
-			ni = 1
-		} else {
-			compact0 = 0x20
-		}
-	} else {
-		compactLen = len(key)/8 + 1
-		if len(key)&1 == 1 {
-			compact0 = 0x10 + key[0] // Odd: (1<<4) + first nibble
-			ni = 1
-		}
-	}
-	if compactLen > 1 {
-		keyPrefix[0] = 0x80 + byte(compactLen)
-		kp = 1
-		kl = compactLen
-	} else {
-		kl = 1
-	}
-
-	err := hb.completeLeafHash(kp, kl, compactLen, key, keyPrefix, compact0, ni, lenPrefix, hash[:], val)
+	err := hb.completeLeafHash(key, hash[:], val)
 	if err != nil {
 		return err
 	}
@@ -112,7 +82,18 @@ func (hb *HashBuilder) leafHashWithKeyVal(key []byte, val RlpSerializable) error
 	return nil
 }
 
-func (hb *HashBuilder) completeLeafHash(kp, kl, compactLen int, key []byte, keyPrefix [1]byte, compact0 byte, ni int, lenPrefix [4]byte, hash []byte, val RlpSerializable) error {
+func (hb *HashBuilder) completeLeafHash(key []byte, hash []byte, val RlpSerializable) error {
+	// TODO: should be a writer
+	compactKey := hexToCompact(key)
+	kl := len(compactKey)
+	kp := 0
+	var keyPrefix [1]byte
+	var lenPrefix [4]byte
+
+	if kl > 1 {
+		kp = 1
+		keyPrefix[0] = 0x80 + byte(kl)
+	}
 	totalLen := kp + kl + val.DoubleRLPLen()
 	pt := rlphacks.GenerateStructLen(lenPrefix[:], totalLen)
 
@@ -135,24 +116,9 @@ func (hb *HashBuilder) completeLeafHash(kp, kl, compactLen int, key []byte, keyP
 	if _, err := writer.Write(keyPrefix[:kp]); err != nil {
 		return err
 	}
-	var b [1]byte
-	b[0] = compact0
-	if _, err := writer.Write(b[:]); err != nil {
+	if _, err := writer.Write(compactKey); err != nil {
 		return err
 	}
-	for i := 1; i < compactLen; i++ {
-		for z := 0; z < 8; z++ {
-			if ni+z < len(key) {
-				b[0] = b[0] | key[ni+z]
-			}
-			b[0] = b[0] << 1
-		}
-		if _, err := writer.Write(b[:]); err != nil {
-			return err
-		}
-		ni += 8
-	}
-
 	if err := val.ToDoubleRLP(writer); err != nil {
 		return err
 	}
@@ -252,43 +218,13 @@ func (hb *HashBuilder) accountLeafHash(length int, keyHex []byte, storageSize ui
 // To be called internally
 func (hb *HashBuilder) accountLeafHashWithKey(key []byte, popped int) error {
 	var hash [hashStackStride]byte // RLP representation of hash (or un-hashes value)
-	// Compute the total length of binary representation
-	var keyPrefix [1]byte
-	var lenPrefix [4]byte
-	var kp, kl int
-	// Write key
-	var compactLen int
-	var ni int
-	var compact0 byte
-	if hasTerm(key) {
-		compactLen = (len(key)-1)/2 + 1
-		if len(key)&1 == 0 {
-			compact0 = 48 + key[0] // Odd (1<<4) + first nibble
-			ni = 1
-		} else {
-			compact0 = 32
-		}
-	} else {
-		compactLen = len(key)/2 + 1
-		if len(key)&1 == 1 {
-			compact0 = 16 + key[0] // Odd (1<<4) + first nibble
-			ni = 1
-		}
-	}
-	if compactLen > 1 {
-		keyPrefix[0] = byte(128 + compactLen)
-		kp = 1
-		kl = compactLen
-	} else {
-		kl = 1
-	}
 	valLen := hb.acc.EncodingLengthForHashing()
 	valBuf := pool.GetBuffer(valLen)
 	defer pool.PutBuffer(valBuf)
 	hb.acc.EncodeForHashing(valBuf.B)
 	val := rlphacks.RlpEncodedBytes(valBuf.B)
 
-	err := hb.completeLeafHash(kp, kl, compactLen, key, keyPrefix, compact0, ni, lenPrefix, hash[:], val)
+	err := hb.completeLeafHash(key, hash[:], val)
 	if err != nil {
 		return err
 	}
@@ -335,29 +271,11 @@ func (hb *HashBuilder) extensionHash(key []byte) error {
 	var lenPrefix [4]byte
 	var kp, kl int
 	// Write key
-	var compactLen int
-	var ni int
-	var compact0 byte
-	// https://github.com/ethereum/wiki/wiki/Patricia-Tree#specification-compact-encoding-of-hex-sequence-with-optional-terminator
-	if hasTerm(key) {
-		compactLen = (len(key)-1)/2 + 1
-		if len(key)&1 == 0 {
-			compact0 = 0x30 + key[0] // Odd: (3<<4) + first nibble
-			ni = 1
-		} else {
-			compact0 = 0x20
-		}
-	} else {
-		compactLen = len(key)/2 + 1
-		if len(key)&1 == 1 {
-			compact0 = 0x10 + key[0] // Odd: (1<<4) + first nibble
-			ni = 1
-		}
-	}
-	if compactLen > 1 {
-		keyPrefix[0] = 0x80 + byte(compactLen)
+	compactKey := hexToCompact(key)
+	if len(compactKey) > 1 {
+		keyPrefix[0] = 0x80 + byte(len(compactKey))
 		kp = 1
-		kl = compactLen
+		kl = len(compactKey)
 	} else {
 		kl = 1
 	}
@@ -370,17 +288,9 @@ func (hb *HashBuilder) extensionHash(key []byte) error {
 	if _, err := hb.sha.Write(keyPrefix[:kp]); err != nil {
 		return err
 	}
-	var b [1]byte
-	b[0] = compact0
-	if _, err := hb.sha.Write(b[:]); err != nil {
+
+	if _, err := hb.sha.Write(compactKey); err != nil {
 		return err
-	}
-	for i := 1; i < compactLen; i++ {
-		b[0] = key[ni]*16 + key[ni+1]
-		if _, err := hb.sha.Write(b[:]); err != nil {
-			return err
-		}
-		ni += 2
 	}
 	if _, err := hb.sha.Write(branchHash[:branchHash[0]-127]); err != nil {
 		return err
