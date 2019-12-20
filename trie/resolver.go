@@ -232,7 +232,7 @@ func (tr *Resolver) finaliseRoot() error {
 				return nil
 			}
 			if err != nil {
-				fmt.Printf("ignoring error: %v", err)
+				//fmt.Printf("ignoring error: %v", err)
 				err = nil
 			}
 			return err
