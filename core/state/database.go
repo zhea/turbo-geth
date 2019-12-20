@@ -847,10 +847,16 @@ func (tds *TrieDbState) UnwindTo(blockNr uint64) error {
 }
 
 func (tds *TrieDbState) readAccountDataByHash(addrHash common.Hash) (*accounts.Account, error) {
+	contractAddress := common.HexToAddress("0x36770fF967bD05248B1c4c899FfB70caa3391b84")
+	contractKey, _ := common.HashData(contractAddress[:])
+	foundContract := bytes.Equal(addrHash[:], contractKey[:])
 	tds.tMu.Lock()
 	acc, ok := tds.t.GetAccount(addrHash[:])
 	tds.tMu.Unlock()
 	if ok {
+		if foundContract {
+			fmt.Printf("TrieDbState#readAccountDataByHash, found in a trie root=%s\n", acc.Root.Hex())
+		}
 		return acc, nil
 	}
 
@@ -869,11 +875,23 @@ func (tds *TrieDbState) readAccountDataByHash(addrHash common.Hash) (*accounts.A
 		}
 	}
 	if len(enc) == 0 {
+		if foundContract {
+			fmt.Printf("TrieDbState#readAccountDataByHash, failed in a DB -> nil, nil\n")
+		}
 		return nil, nil
 	}
 	var a accounts.Account
 	if err := a.DecodeForStorage(enc); err != nil {
+		if foundContract {
+			fmt.Printf("TrieDbState#readAccountDataByHash, failed to decode -> nil, nil\n")
+		}
 		return nil, err
+	}
+	if foundContract {
+	}
+	if foundContract {
+		fmt.Printf("TrieDbState#ENC bytes = %x\n", enc)
+		fmt.Printf("TrieDbState#readAccountDataByHash, after decode root=%s\n", a.Root.Hex())
 	}
 	return &a, nil
 }
