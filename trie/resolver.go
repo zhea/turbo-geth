@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ledgerwatch/turbo-geth/common"
 	"github.com/ledgerwatch/turbo-geth/common/dbutils"
 	"github.com/ledgerwatch/turbo-geth/core/types/accounts"
 	"github.com/ledgerwatch/turbo-geth/ethdb"
@@ -63,6 +64,8 @@ type Resolver struct {
 	value      OneBytesTape // Current value to be used as the value tape for the hash builder
 	groups     []uint16
 	a          accounts.Account
+	keyTraces [][]byte
+	valueTraces [][]byte
 }
 
 func NewResolver(topLevels int, forAccounts bool, blockNr uint64) *Resolver {
@@ -233,6 +236,9 @@ func (tr *Resolver) finaliseRoot() error {
 			}
 			if err != nil {
 				fmt.Printf("ignoring error: %v\n", err)
+				for i, key := range tr.keyTraces {
+					fmt.Printf("%x: %x\n", key, tr.valueTraces[i])
+				}
 				err = nil
 			}
 			return err
@@ -267,7 +273,11 @@ func (tr *Resolver) Walker(keyIdx int, k []byte, v []byte) error {
 		tr.currentReq = tr.requests[tr.reqIndices[keyIdx]]
 		tr.currentRs = tr.rss[keyIdx]
 		tr.curr.Reset()
+		tr.keyTraces = nil
+		tr.valueTraces = nil
 	}
+	tr.keyTraces = append(tr.keyTraces, common.CopyBytes(k))
+	tr.valueTraces = append(tr.valueTraces, common.CopyBytes(v))
 	if len(v) > 0 {
 		tr.curr.Reset()
 		tr.curr.Write(tr.succ.Bytes())
