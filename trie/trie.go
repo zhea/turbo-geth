@@ -1272,7 +1272,7 @@ func (t *Trie) unload(hex []byte, h *hasher) {
 		fmt.Printf("nd == nil, hex %x, parent node: %T\n", hex, parent)
 	}
 	h.hash(nd, len(hex) == 0, hn[:])
-	//fmt.Printf("unload %v -> replacing %T with hash %s\n", hex, nd, hn.Hex())
+	fmt.Printf("unload hash:%s @ %v\n\treplacing\n%T\n", hn.Hex(), hex, nd.fstring(""))
 	hnode := hashNode(hn[:])
 	switch p := parent.(type) {
 	case nil:
