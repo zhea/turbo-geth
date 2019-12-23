@@ -224,6 +224,7 @@ func (tr *Resolver) finaliseRoot() error {
 		tr.currentReq.t.hook(hookKey, hbRoot)
 		//fmt.Println("\n*******\ntrie after hook")
 		//tr.currentReq.t.PrintTrie()
+		fmt.Printf("hash: %x\n", hbHash)
 		if len(tr.currentReq.resolveHash) > 0 && !bytes.Equal(tr.currentReq.resolveHash, hbHash[:]) {
 			// FIXME: if binary trie only
 
