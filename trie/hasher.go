@@ -87,6 +87,9 @@ func (h *hasher) hashInternal(n node, force bool, storeTo []byte, bufOffset int)
 	}
 	if !n.dirty() {
 		copy(storeTo, n.hash())
+		if IsTargetHash(storeTo) {
+			fmt.Printf("found our hash: hasher.hashInternal/!n.dirty() node=%s\n", n.fstring(""))
+		}
 		return common.HashLength, nil
 	}
 	// Trie not processed yet or needs storage, walk the children
@@ -96,6 +99,9 @@ func (h *hasher) hashInternal(n node, force bool, storeTo []byte, bufOffset int)
 	}
 
 	hashLen := h.store(children, force, storeTo)
+	if IsTargetHash(storeTo) {
+		fmt.Printf("found our hash: hasher.hashInternal/hashChildren node=%s\n", n.fstring(""))
+	}
 
 	if hashLen == common.HashLength {
 		switch n := n.(type) {
@@ -336,6 +342,9 @@ func (h *hasher) makeHashNode(data []byte) hashNode {
 	h.sha.Reset()
 	h.sha.Write(data)
 	h.sha.Read(n)
+	if IsTargetHash(n[:]) {
+		fmt.Printf("found our hash: hasher.makeHashNode data=%v\n", data)
+	}
 	return n
 }
 
