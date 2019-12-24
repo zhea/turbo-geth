@@ -165,6 +165,9 @@ func (hb *HashBuilder) accountLeaf(length int, keyHex []byte, storageSize uint64
 			// Root is on top of the stack
 			root = hb.nodeStack[len(hb.nodeStack)-popped-1]
 			if root == nil {
+				if IsTargetHash(hb.acc.Root[:]) {
+					fmt.Printf("found our hash: hb.accountLeaf, keyHex=%v\n", keyHex)
+				}
 				root = hashNode(common.CopyBytes(hb.acc.Root[:]))
 			}
 		}
@@ -246,6 +249,9 @@ func (hb *HashBuilder) extension(key []byte) error {
 	case nil:
 		//fmt.Printf("nd == nil, adding hashNode\n")
 		branchHash := common.CopyBytes(hb.hashStack[len(hb.hashStack)-common.HashLength:])
+		if IsTargetHash(branchHash) {
+			fmt.Printf("found our hash: hb.extension#branchHash, node nil, keyHex=%v\n", key)
+		}
 		hb.nodeStack[len(hb.nodeStack)-1] = &shortNode{Key: common.CopyBytes(key), Val: hashNode(branchHash)}
 	case *fullNode:
 		hb.nodeStack[len(hb.nodeStack)-1] = &shortNode{Key: common.CopyBytes(key), Val: n}
@@ -320,7 +326,11 @@ func (hb *HashBuilder) branch(set uint16) error {
 	for digit := uint(0); digit < 16; digit++ {
 		if ((uint16(1) << digit) & set) != 0 {
 			if nodes[i] == nil {
-				f.Children[digit] = hashNode(common.CopyBytes(hashes[hashStackStride*i+1 : hashStackStride*(i+1)]))
+				hn := hashNode(common.CopyBytes(hashes[hashStackStride*i+1 : hashStackStride*(i+1)]))
+				f.Children[digit] = hn
+				if IsTargetHash(hn[:]) {
+					fmt.Printf("found our hash: hb.extension#branch, f.Children[%d] == nil, set=%b\n", i, set)
+				}
 			} else {
 				f.Children[digit] = nodes[i]
 			}

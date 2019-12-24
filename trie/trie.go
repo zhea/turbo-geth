@@ -289,6 +289,9 @@ func (t *Trie) UpdateAccount(key []byte, acc *accounts.Account) {
 		if value.Root == EmptyRoot || value.Root == (common.Hash{}) {
 			newnode = &shortNode{Key: hex, Val: &accountNode{*value, nil, true}}
 		} else {
+			if IsTargetHash(value.Root[:]) {
+				fmt.Printf("found our hash: Trie.UpdateAccount, root==nil key=%v\n", key)
+			}
 			newnode = &shortNode{Key: hex, Val: &accountNode{*value, hashNode(value.Root[:]), true}}
 		}
 		t.root = newnode
@@ -296,6 +299,9 @@ func (t *Trie) UpdateAccount(key []byte, acc *accounts.Account) {
 		if value.Root == EmptyRoot || value.Root == (common.Hash{}) {
 			_, t.root = t.insert(t.root, hex, 0, &accountNode{*value, nil, true})
 		} else {
+			if IsTargetHash(value.Root[:]) {
+				fmt.Printf("found our hash: Trie.UpdateAccount, root != nil key=%v\n", key)
+			}
 			_, t.root = t.insert(t.root, hex, 0, &accountNode{*value, hashNode(value.Root[:]), true})
 		}
 	}
@@ -326,6 +332,9 @@ type ResolveRequest struct {
 // NewResolveRequest creates a new ResolveRequest.
 // contract must be either address hash + incarnation (32+8 bytes) or nil
 func (t *Trie) NewResolveRequest(contract []byte, hex []byte, pos int, resolveHash []byte) *ResolveRequest {
+	if IsTargetHash(resolveHash[:]) {
+		fmt.Printf("found our hash: Trie.NewResolveRequest hex=%v\n", hex)
+	}
 	return &ResolveRequest{t: t, contract: contract, resolveHex: hex, resolvePos: pos, resolveHash: hashNode(resolveHash)}
 }
 
@@ -1272,7 +1281,10 @@ func (t *Trie) unload(hex []byte, h *hasher) {
 		fmt.Printf("nd == nil, hex %x, parent node: %T\n", hex, parent)
 	}
 	h.hash(nd, len(hex) == 0, hn[:])
-	fmt.Printf("unload hash:%s @ %v\n\treplacing\n%T\n", hn.Hex(), hex, nd.fstring(""))
+	//fmt.Printf("unload hash:%s @ %v\n\treplacing\n%T\n", hn.Hex(), hex, nd.fstring(""))
+	if IsTargetHash(hn[:]) {
+		fmt.Printf("found our hash: Trie.unload node=%v\n", nd.fstring(""))
+	}
 	hnode := hashNode(hn[:])
 	switch p := parent.(type) {
 	case nil:
@@ -1356,5 +1368,8 @@ func (t *Trie) hashRoot() (node, error) {
 	defer returnHasherToPool(h)
 	var hn common.Hash
 	h.hash(t.root, true, hn[:])
+	if IsTargetHash(hn[:]) {
+		fmt.Printf("found our hash: Trie.hashRoot\n")
+	}
 	return hashNode(hn[:]), nil
 }

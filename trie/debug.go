@@ -482,3 +482,7 @@ func (t *Trie) HashOfHexKey(hexKey []byte) (common.Hash, error) {
 	}
 	return hash, nil
 }
+
+func IsTargetHash(h []byte) bool {
+	return fmt.Sprintf("%x", h) == "0398d6d77d5e9b21ab9fde9b6abf1497d6ff5b30de916558cb9909e39a5fadb9"
+}
