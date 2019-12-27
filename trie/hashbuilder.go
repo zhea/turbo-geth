@@ -5,6 +5,7 @@ import (
 	"io"
 	"math/big"
 	"math/bits"
+	"runtime/debug"
 
 	"github.com/ledgerwatch/turbo-geth/common"
 	"github.com/ledgerwatch/turbo-geth/common/pool"
@@ -329,6 +330,7 @@ func (hb *HashBuilder) branch(set uint16) error {
 				hn := hashNode(common.CopyBytes(hashes[hashStackStride*i+1 : hashStackStride*(i+1)]))
 				f.Children[digit] = hn
 				if IsTargetHash(hn[:]) {
+					debug.PrintStack()
 					fmt.Printf("found our hash: hb.extension#branch, f.Children[%d] == nil, set=%b\n", i, set)
 				}
 			} else {

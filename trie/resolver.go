@@ -231,6 +231,7 @@ func (tr *Resolver) finaliseRoot() error {
 				fmt.Printf("%v\n", err)
 				return nil
 			}
+			fmt.Printf("hookKey: %x, %s\n", hookKey, hbRoot.fstring(""))
 			return err
 		}
 	}

@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"runtime/debug"
 
 	"github.com/ledgerwatch/turbo-geth/common"
 	"github.com/ledgerwatch/turbo-geth/common/pool"
@@ -88,6 +89,7 @@ func (h *hasher) hashInternal(n node, force bool, storeTo []byte, bufOffset int)
 	if !n.dirty() {
 		copy(storeTo, n.hash())
 		if IsTargetHash(storeTo) {
+			debug.PrintStack()
 			fmt.Printf("found our hash: hasher.hashInternal/!n.dirty() node=%s\n", n.fstring(""))
 		}
 		return common.HashLength, nil
