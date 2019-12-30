@@ -345,6 +345,9 @@ func (hb *HashBuilder) branch(set uint16) error {
 		return err
 	}
 	copy(f.flags.hash[:], hb.hashStack[len(hb.hashStack)-common.HashLength:])
+	if IsTargetHash(f.flags.hash[:]) {
+		fmt.Printf("hb#branch found our hash: reseting dirtry to false=%s\n", f.fstring(""))
+	}
 	if hb.trace {
 		fmt.Printf("Stack depth: %d\n", len(hb.nodeStack))
 	}

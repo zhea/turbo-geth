@@ -114,6 +114,9 @@ func (h *hasher) hashInternal(n node, force bool, storeTo []byte, bufOffset int)
 			n.flags.dirty = false
 		case *fullNode:
 			copy(n.flags.hash[:], storeTo)
+			if IsTargetHash(n.flags.hash[:]) {
+				fmt.Printf("found our hash: hashInternal, reseting dirtry to false=%s\n", n.fstring(""))
+			}
 			n.flags.dirty = false
 		}
 	}
