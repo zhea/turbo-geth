@@ -193,15 +193,15 @@ func (t *Trie) PrintDiff(t2 *Trie, w io.Writer) {
 }
 
 func (n *fullNode) fstring(ind string) string {
-	resp := fmt.Sprintf("full\n%s", ind)
+	resp := fmt.Sprintf("full\n", ind)
 	for i, node := range &n.Children {
 		if indices[i] != "0" && indices[i] != "1" {
 			continue
 		}
 		if node == nil {
-			resp += fmt.Sprintf("- %s: <nil>\n", indices[i])
+			resp += fmt.Sprintf("%s- %s: <nil>\n", ind, indices[i])
 		} else {
-			resp += fmt.Sprintf("- %s: %v\n", indices[i], node.fstring(ind+"  "))
+			resp += fmt.Sprintf("%s- %s: %v\n", ind, indices[i], node.fstring(ind+"  "))
 		}
 	}
 	return resp + fmt.Sprintf("\n%s] ", ind)
