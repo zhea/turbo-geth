@@ -1605,6 +1605,12 @@ func (bc *BlockChain) insertChain(ctx context.Context, chain types.Blocks, verif
 			if err = bc.trieDbState.UnwindTo(readBlockNr); err != nil {
 				bc.db.Rollback()
 				log.Error("Could not rewind", "error", err)
+				bc.trieDbState = nil
+				return 0, err
+			}
+
+			root := bc.trieDbState.LastRoot()
+			if root != parentRoot {
 				filename := fmt.Sprintf("root_%d.txt", readBlockNr)
 				log.Warn("Generating deep snapshot of the wrong tries...", "file", filename)
 				f, err := os.Create(filename)
@@ -1612,12 +1618,6 @@ func (bc *BlockChain) insertChain(ctx context.Context, chain types.Blocks, verif
 					defer f.Close()
 					bc.trieDbState.PrintTrie(f)
 				}
-				bc.trieDbState = nil
-				return 0, err
-			}
-
-			root := bc.trieDbState.LastRoot()
-			if root != parentRoot {
 				log.Error("Incorrect rewinding", "root", fmt.Sprintf("%x", root), "expected", fmt.Sprintf("%x", parentRoot))
 				bc.db.Rollback()
 				bc.trieDbState = nil
