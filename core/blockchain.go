@@ -27,6 +27,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"os"
 
 	lru "github.com/hashicorp/golang-lru"
 
@@ -1604,6 +1605,13 @@ func (bc *BlockChain) insertChain(ctx context.Context, chain types.Blocks, verif
 			if err = bc.trieDbState.UnwindTo(readBlockNr); err != nil {
 				bc.db.Rollback()
 				log.Error("Could not rewind", "error", err)
+				filename := fmt.Sprintf("root_%d.txt", readBlockNr)
+				log.Warn("Generating deep snapshot of the wrong tries...", "file", filename)
+				f, err := os.Create(filename)
+				if err == nil {
+					defer f.Close()
+					bc.trieDbState.PrintTrie(f)
+				}
 				bc.trieDbState = nil
 				return 0, err
 			}
