@@ -782,6 +782,9 @@ func (tds *TrieDbState) UnwindTo(blockNr uint64) error {
 					return err
 				}
 				// Fetch the code hash
+				if addrHash == common.HexToHash("0x23fd22dfa0f566f6b353a08bedabb812874cc3bd23506d6e52ba40cf586903c8") {
+					fmt.Printf("Contract %x incarnation: %d, codeHash: %x\n", addrHash, acc.Incarnation, acc.CodeHash)
+				}
 				if acc.Incarnation > 0 && debug.IsThinHistory() {
 					codeHash, _ := tds.db.Get(dbutils.ContractCodeBucket, dbutils.GenerateStoragePrefix(addrHash, acc.Incarnation))
 					copy(acc.CodeHash[:], codeHash)
