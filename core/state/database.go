@@ -772,7 +772,7 @@ func (tds *TrieDbState) UnwindTo(blockNr uint64) error {
 	b := tds.currentBuffer
 
 	if err := tds.db.RewindData(tds.blockNr, blockNr, func(bucket, key, value []byte) error {
-		//fmt.Printf("bucket: %x, key: %x, value: %x\n", bucket, key, value)
+		//fmt.Printf("UnwindTo bucket: %x, key: %x, value: %x\n", bucket, key, value)
 		if bytes.Equal(bucket, dbutils.AccountsHistoryBucket) {
 			var addrHash common.Hash
 			copy(addrHash[:], key)
@@ -782,14 +782,9 @@ func (tds *TrieDbState) UnwindTo(blockNr uint64) error {
 					return err
 				}
 				// Fetch the code hash
-				if addrHash == common.HexToHash("0x23fd22dfa0f566f6b353a08bedabb812874cc3bd23506d6e52ba40cf586903c8") {
-					fmt.Printf("Contract %x incarnation: %d, codeHash: %x\n", addrHash, acc.Incarnation, acc.CodeHash)
-				}
 				if acc.Incarnation > 0 && debug.IsThinHistory() {
 					codeHash, _ := tds.db.Get(dbutils.ContractCodeBucket, dbutils.GenerateStoragePrefix(addrHash, acc.Incarnation))
 					copy(acc.CodeHash[:], codeHash)
-				} else if acc.Incarnation == 0 && debug.IsThinHistory() {
-					copy(acc.CodeHash[:], emptyCodeHash)
 				}
 				b.accountUpdates[addrHash] = &acc
 				if err := tds.db.Put(dbutils.AccountsBucket, addrHash[:], value); err != nil {
