@@ -318,9 +318,9 @@ func Stateless(
 			}
 		}
 		execStart = time.Now()
-		//var preCalculatedRoot common.Hash
+		var preCalculatedRoot common.Hash
 		if tryPreRoot {
-			_, err = tds.CalcTrieRoots(blockNum == 2703827)
+			preCalculatedRoot, err = tds.CalcTrieRoots(blockNum == 2703827)
 			if err != nil {
 				fmt.Printf("failed to calculate preRoot for block %d: %v\n", blockNum, err)
 				return
@@ -334,18 +334,18 @@ func Stateless(
 			return
 		}
 		execTime4 := time.Since(execStart)
-		/*
 		if tryPreRoot && tds.LastRoot() != preCalculatedRoot {
+			/*
 			filename := fmt.Sprintf("right_%d.txt", blockNum)
 			f, err1 := os.Create(filename)
 			if err1 == nil {
 				defer f.Close()
 				tds.PrintTrie(f)
 			}
+			*/
 			fmt.Printf("block %d, preCalculatedRoot %x != lastRoot %x\n", blockNum, preCalculatedRoot, tds.LastRoot())
-			return
+			//return
 		}
-		*/
 		if finalRootFail {
 			filename := fmt.Sprintf("right_%d.txt", blockNum)
 			f, err1 := os.Create(filename)
