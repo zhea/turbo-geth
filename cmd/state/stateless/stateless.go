@@ -164,6 +164,12 @@ func Stateless(
 		interruptCh <- true
 	}()
 
+	timeF, err := os.Create("timings.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer timeF.Close()
+
 	ethDb, err := createDb(chaindata)
 	check(err)
 	defer ethDb.Close()
@@ -230,6 +236,7 @@ func Stateless(
 		if block == nil {
 			break
 		}
+		execStart := time.Now()
 		statedb := state.New(tds)
 		gp := new(core.GasPool).AddGas(block.GasLimit())
 		usedGas := new(uint64)
@@ -256,6 +263,8 @@ func Stateless(
 			fmt.Printf("Finalize of block %d failed: %v\n", blockNum, err)
 			return
 		}
+		execTime1 := time.Since(execStart)
+		execStart = time.Now()
 
 		ctx := chainConfig.WithEIPsFlags(context.Background(), header.Number)
 		if err := statedb.FinalizeTx(ctx, tds.TrieStateWriter()); err != nil {
@@ -267,6 +276,8 @@ func Stateless(
 			fmt.Printf("Failed to resolve state trie: %v\n", err)
 			return
 		}
+		execTime2 := time.Since(execStart)
+
 		witness = nil
 		if blockNum >= witnessThreshold {
 			// Witness has to be extracted before the state trie is modified
@@ -315,11 +326,13 @@ func Stateless(
 				return
 			}
 		}
+		execStart = time.Now()
 		roots, err := tds.UpdateStateTrie()
 		if err != nil {
 			fmt.Printf("failed to calculate IntermediateRoot: %v\n", err)
 			return
 		}
+		execTime3 := time.Since(execStart)
 		if tryPreRoot && tds.LastRoot() != preCalculatedRoot {
 			filename := fmt.Sprintf("right_%d.txt", blockNum)
 			f, err1 := os.Create(filename)
@@ -392,6 +405,7 @@ func Stateless(
 
 			fmt.Printf("Processed %d blocks (%v blocks/sec)", blockNum, blocksPerSecond)
 		}
+		fmt.Fprintf(timeF, "%d,%d,%d,%d\n", blockNum, execTime1.Nanoseconds(), execTime2.Nanoseconds(), execTime3.Nanoseconds())
 		// Check for interrupts
 		select {
 		case interrupt = <-interruptCh:
