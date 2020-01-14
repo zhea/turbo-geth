@@ -317,7 +317,7 @@ func Stateless(
 				finalRootFail = true
 			}
 		}
-
+		execStart = time.Now()
 		var preCalculatedRoot common.Hash
 		if tryPreRoot {
 			preCalculatedRoot, err = tds.CalcTrieRoots(blockNum == 2703827)
@@ -326,13 +326,14 @@ func Stateless(
 				return
 			}
 		}
+		execTime3 := time.Since(execStart)
 		execStart = time.Now()
 		roots, err := tds.UpdateStateTrie()
 		if err != nil {
 			fmt.Printf("failed to calculate IntermediateRoot: %v\n", err)
 			return
 		}
-		execTime3 := time.Since(execStart)
+		execTime4 := time.Since(execStart)
 		if tryPreRoot && tds.LastRoot() != preCalculatedRoot {
 			filename := fmt.Sprintf("right_%d.txt", blockNum)
 			f, err1 := os.Create(filename)
@@ -405,7 +406,7 @@ func Stateless(
 
 			fmt.Printf("Processed %d blocks (%v blocks/sec)", blockNum, blocksPerSecond)
 		}
-		fmt.Fprintf(timeF, "%d,%d,%d,%d\n", blockNum, execTime1.Nanoseconds(), execTime2.Nanoseconds(), execTime3.Nanoseconds())
+		fmt.Fprintf(timeF, "%d,%d,%d,%d,%d\n", blockNum, execTime1.Nanoseconds(), execTime2.Nanoseconds(), execTime3.Nanoseconds(), execTime4.Nanoseconds())
 		// Check for interrupts
 		select {
 		case interrupt = <-interruptCh:
