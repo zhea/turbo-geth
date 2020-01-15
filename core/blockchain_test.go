@@ -1537,6 +1537,15 @@ func doModesTest(history, preimages, receipts, txlookup bool) error {
 		genesis = gspec.MustCommit(db)
 	)
 
+	fmt.Println("After genesis")
+	err := db.Walk(dbutils.AccountsHistoryBucket, nil, 0, func(k, v []byte) (bool, error) {
+		fmt.Println("k",k, "v",v)
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
 	cacheConfig := &CacheConfig{
 		Disabled:            true,
 		BlocksBeforePruning: 1024,
@@ -1596,6 +1605,7 @@ func doModesTest(history, preimages, receipts, txlookup bool) error {
 		}
 	})
 
+	fmt.Println("---------insert-------")
 	if _, err := blockchain.InsertChain(blocks); err != nil {
 		return err
 	}
@@ -1614,7 +1624,8 @@ func doModesTest(history, preimages, receipts, txlookup bool) error {
 			if bucketName == string(dbutils.AccountsHistoryBucket) && len(v) == 0 {
 				return true, nil
 			}
-
+			fmt.Println("k",k)
+			fmt.Println("v",v)
 			numberOfEntries++
 			return true, nil
 		})

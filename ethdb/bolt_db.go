@@ -40,6 +40,7 @@ type BoltDatabase struct {
 	db  *bolt.DB   // BoltDB instance
 	log log.Logger // Contextual logger tracking the database path
 	id  uint64
+	changeSetBucketOnly bool
 }
 
 // NewBoltDatabase returns a BoltDB wrapper.
@@ -87,11 +88,11 @@ func (db *BoltDatabase) Put(bucket, key []byte, value []byte) error {
 
 // PutS adds a new entry to the historical buckets:
 // hBucket (unless changeSetBucketOnly) and ChangeSet.
-func (db *BoltDatabase) PutS(hBucket, key, value []byte, timestamp uint64, changeSetBucketOnly bool) error {
+func (db *BoltDatabase) PutS(hBucket, key, value []byte, timestamp uint64) error {
 	composite, encodedTS := dbutils.CompositeKeySuffix(key, timestamp)
 	changeSetKey := dbutils.CompositeChangeSetKey(encodedTS, hBucket)
 	err := db.db.Update(func(tx *bolt.Tx) error {
-		if !changeSetBucketOnly {
+		if !db.changeSetBucketOnly {
 			hb, err := tx.CreateBucketIfNotExists(hBucket, true)
 			if err != nil {
 				return err
@@ -715,6 +716,10 @@ func (db *BoltDatabase) TruncateAncients(items uint64) error {
 
 func (db *BoltDatabase) ID() uint64 {
 	return db.id
+}
+
+func (db *BoltDatabase) ChangeSetBucketOnly(v bool) {
+	db.changeSetBucketOnly = v
 }
 
 func InspectDatabase(db Database) error {

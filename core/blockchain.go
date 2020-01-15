@@ -354,6 +354,7 @@ func (bc *BlockChain) GetTrieDbState() (*state.TrieDbState, error) {
 		var err error
 		currentBlockNr := bc.CurrentBlock().NumberU64()
 		bc.trieDbState, err = bc.GetTrieDbStateByBlock(bc.CurrentBlock().Header().Root, currentBlockNr)
+		bc.trieDbState.SetNoHistory(bc.NoHistory())
 		if err != nil {
 			bc.trieDbState = nil
 			return nil, err

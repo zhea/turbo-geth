@@ -95,6 +95,7 @@ type mutation struct {
 	changeSetByBlock map[uint64]map[string]*dbutils.ChangeSet
 	mu               sync.RWMutex
 	db               Database
+	changeSetBucketOnly bool
 }
 
 func (m *mutation) getMem(bucket, key []byte) ([]byte, bool) {
@@ -190,7 +191,7 @@ func (m *mutation) Put(bucket, key []byte, value []byte) error {
 }
 
 // Assumes that bucket, key, and value won't be modified
-func (m *mutation) PutS(hBucket, key, value []byte, timestamp uint64, noHistory bool) error {
+func (m *mutation) PutS(hBucket, key, value []byte, timestamp uint64) error {
 	//fmt.Printf("PutS bucket %x key %x value %x timestamp %d\n", bucket, key, value, timestamp)
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -211,7 +212,7 @@ func (m *mutation) PutS(hBucket, key, value []byte, timestamp uint64, noHistory 
 		return err
 	}
 	changesByBucket[hBucketStr] = changeSet
-	if noHistory {
+	if m.changeSetBucketOnly {
 		return nil
 	}
 	if !debug.IsThinHistory() || bytes.Equal(hBucket, dbutils.StorageHistoryBucket) {
@@ -363,7 +364,10 @@ func (m *mutation) Commit() (uint64, error) {
 				if err != nil {
 					log.Error("EncodeChangeSet changeSet error on commit", "err", err)
 				}
-				if debug.IsThinHistory() && !bytes.Equal(hBucket, dbutils.StorageHistoryBucket) {
+				m.puts.SetStr(changeSetStr, changeSetKey, changedRLP)
+
+				fmt.Println("changeSetBucketOnly",m.changeSetBucketOnly)
+				if debug.IsThinHistory() && !bytes.Equal(hBucket, dbutils.StorageHistoryBucket) && !m.changeSetBucketOnly {
 					changedKeys := changeSet.ChangedKeys()
 					for k := range changedKeys {
 						value, err := m.getNoLock(hBucket, []byte(k))
@@ -383,7 +387,6 @@ func (m *mutation) Commit() (uint64, error) {
 						m.puts.SetStr(hBucketStr, []byte(k), v)
 					}
 				}
-				m.puts.SetStr(changeSetStr, changeSetKey, changedRLP)
 			}
 		}
 	}
@@ -460,6 +463,10 @@ func (m *mutation) ID() uint64 {
 	return m.db.ID()
 }
 
+func (db *mutation) ChangeSetBucketOnly(v bool) {
+	db.changeSetBucketOnly = v
+}
+
 // [TURBO-GETH] Freezer support (not implemented yet)
 // Ancients returns an error as we don't have a backing chain freezer.
 func (m *mutation) Ancients() (uint64, error) {
@@ -505,9 +512,9 @@ func (d *RWCounterDecorator) Put(bucket, key, value []byte) error {
 	return d.Database.Put(bucket, key, value)
 }
 
-func (d *RWCounterDecorator) PutS(hBucket, key, value []byte, timestamp uint64, changeSetBucketOnly bool) error {
+func (d *RWCounterDecorator) PutS(hBucket, key, value []byte, timestamp uint64) error {
 	atomic.AddUint64(&d.DBCounterStats.PutS, 1)
-	return d.Database.PutS(hBucket, key, value, timestamp, changeSetBucketOnly)
+	return d.Database.PutS(hBucket, key, value, timestamp)
 }
 func (d *RWCounterDecorator) Get(bucket, key []byte) ([]byte, error) {
 	atomic.AddUint64(&d.DBCounterStats.Get, 1)
@@ -552,6 +559,9 @@ func (d *RWCounterDecorator) MultiPut(tuples ...[]byte) (uint64, error) {
 }
 func (d *RWCounterDecorator) MemCopy() Database {
 	return d.Database.MemCopy()
+}
+func (d *RWCounterDecorator) ChangeSetBucketOnly(v bool) {
+	d.Database.ChangeSetBucketOnly(v)
 }
 func (d *RWCounterDecorator) NewBatch() DbWithPendingMutations {
 	mm := &mutation{

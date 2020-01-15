@@ -274,6 +274,7 @@ func (tds *TrieDbState) SetResolveReads(rr bool) {
 
 func (tds *TrieDbState) SetNoHistory(nh bool) {
 	tds.noHistory = nh
+	tds.db.ChangeSetBucketOnly(nh)
 }
 
 func (tds *TrieDbState) Copy() *TrieDbState {
@@ -342,6 +343,7 @@ func (tds *TrieDbState) WithNewBuffer() *TrieDbState {
 		pg:              tds.pg,
 		tp:              tds.tp,
 	}
+	tds.db.ChangeSetBucketOnly(tds.noHistory)
 	tds.tMu.Unlock()
 
 	return t

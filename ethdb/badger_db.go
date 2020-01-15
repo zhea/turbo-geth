@@ -43,6 +43,7 @@ type BadgerDatabase struct {
 	tmpDir   string       // Temporary data directory
 	gcTicker *time.Ticker // Garbage Collector
 	id       uint64
+	changeSetBucketOnly bool
 }
 
 // NewBadgerDatabase returns a BadgerDB wrapper.
@@ -168,13 +169,13 @@ func (db *BadgerDatabase) Get(bucket, key []byte) ([]byte, error) {
 
 // PutS adds a new entry to the historical buckets:
 // hBucket (unless changeSetBucketOnly) and ChangeSet.
-func (db *BadgerDatabase) PutS(hBucket, key, value []byte, timestamp uint64, changeSetBucketOnly bool) error {
+func (db *BadgerDatabase) PutS(hBucket, key, value []byte, timestamp uint64) error {
 	composite, encodedTS := dbutils.CompositeKeySuffix(key, timestamp)
 	hKey := bucketKey(hBucket, composite)
 	changeSetKey := bucketKey(dbutils.ChangeSetBucket, dbutils.CompositeChangeSetKey(encodedTS, hBucket))
 
 	return db.db.Update(func(tx *badger.Txn) error {
-		if !changeSetBucketOnly {
+		if !db.changeSetBucketOnly {
 			if err := tx.Set(hKey, value); err != nil {
 				return err
 			}
@@ -514,3 +515,8 @@ func (db *BadgerDatabase) TruncateAncients(items uint64) error {
 func (db *BadgerDatabase) ID() uint64 {
 	return db.id
 }
+
+func (db *BadgerDatabase) ChangeSetBucketOnly(v bool) {
+	db.changeSetBucketOnly = v
+}
+

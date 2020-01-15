@@ -34,7 +34,7 @@ type Putter interface {
 	// PutS adds a new entry to the historical buckets:
 	// hBucket (unless changeSetBucketOnly) and ChangeSet.
 	// timestamp == block number
-	PutS(hBucket, key, value []byte, timestamp uint64, changeSetBucketOnly bool) error
+	PutS(hBucket, key, value []byte, timestamp uint64) error
 }
 
 // Getter wraps the database read operations.
@@ -101,6 +101,7 @@ type Database interface {
 	// FIXME: implement support if needed
 	Ancients() (uint64, error)
 	TruncateAncients(items uint64) error
+	ChangeSetBucketOnly(bool)
 
 	ID() uint64
 }

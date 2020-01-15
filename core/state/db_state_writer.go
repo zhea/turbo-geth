@@ -3,6 +3,7 @@ package state
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/ledgerwatch/turbo-geth/common"
 	"github.com/ledgerwatch/turbo-geth/common/dbutils"
 	"github.com/ledgerwatch/turbo-geth/common/debug"
@@ -27,7 +28,6 @@ func (dsw *DbStateWriter) UpdateAccountData(ctx context.Context, address common.
 		return err
 	}
 
-	noHistory := dsw.tds.noHistory
 	// Don't write historical record if the account did not change
 	if accountsEqual(original, account) {
 		return nil
@@ -49,7 +49,8 @@ func (dsw *DbStateWriter) UpdateAccountData(ctx context.Context, address common.
 		originalData = make([]byte, originalDataLen)
 		testAcc.EncodeForStorage(originalData)
 	}
-	return dsw.tds.db.PutS(dbutils.AccountsHistoryBucket, addrHash[:], originalData, dsw.tds.blockNr, noHistory)
+	fmt.Println("Update no history", dsw.tds.noHistory, dsw.tds.blockNr)
+	return dsw.tds.db.PutS(dbutils.AccountsHistoryBucket, addrHash[:], originalData, dsw.tds.blockNr)
 }
 
 func (dsw *DbStateWriter) DeleteAccount(ctx context.Context, address common.Address, original *accounts.Account) error {
@@ -71,9 +72,8 @@ func (dsw *DbStateWriter) DeleteAccount(ctx context.Context, address common.Addr
 		original.EncodeForStorage(originalData)
 		// We must keep root using thin history on deleting account as is
 	}
-
-	noHistory := dsw.tds.noHistory
-	return dsw.tds.db.PutS(dbutils.AccountsHistoryBucket, addrHash[:], originalData, dsw.tds.blockNr, noHistory)
+	fmt.Println("Delete no history", dsw.tds.noHistory)
+	return dsw.tds.db.PutS(dbutils.AccountsHistoryBucket, addrHash[:], originalData, dsw.tds.blockNr)
 }
 
 func (dsw *DbStateWriter) UpdateAccountCode(addrHash common.Hash, incarnation uint64, codeHash common.Hash, code []byte) error {
@@ -116,11 +116,10 @@ func (dsw *DbStateWriter) WriteAccountStorage(ctx context.Context, address commo
 		return err
 	}
 
-	noHistory := dsw.tds.noHistory
 	o := bytes.TrimLeft(original[:], "\x00")
 	originalValue := make([]byte, len(o))
 	copy(originalValue, o)
-	return dsw.tds.db.PutS(dbutils.StorageHistoryBucket, compositeKey, originalValue, dsw.tds.blockNr, noHistory)
+	return dsw.tds.db.PutS(dbutils.StorageHistoryBucket, compositeKey, originalValue, dsw.tds.blockNr)
 }
 
 func (dsw *DbStateWriter) CreateContract(address common.Address) error {
