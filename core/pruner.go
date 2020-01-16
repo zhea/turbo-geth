@@ -109,6 +109,7 @@ func calculateNumOfPrunedBlocks(currentBlock, lastPrunedBlock uint64, blocksBefo
 		return lastPrunedBlock, lastPrunedBlock, false
 	}
 }
+
 func (p *BasicPruner) Stop() {
 	p.stop <- struct{}{}
 	p.wg.Wait()
@@ -145,13 +146,13 @@ func Prune(db ethdb.Database, blockNumFrom uint64, blockNumTo uint64) error {
 
 		keysToRemove.AccountChangeSet = append(keysToRemove.AccountChangeSet, key)
 
-		err := dbutils.Walk(v, func(cKey, _ []byte) error {
+		innerErr := dbutils.Walk(v, func(cKey, _ []byte) error {
 			compKey, _ := dbutils.CompositeKeySuffix(cKey, timestamp)
 			keysToRemove.AccountHistoryKeys = append(keysToRemove.AccountHistoryKeys, compKey)
 			return nil
 		})
-		if err != nil {
-			return false, err
+		if innerErr != nil {
+			return false, innerErr
 		}
 		return true, nil
 	})
@@ -169,13 +170,13 @@ func Prune(db ethdb.Database, blockNumFrom uint64, blockNumTo uint64) error {
 
 		keysToRemove.StorageChangeSet = append(keysToRemove.StorageChangeSet, key)
 
-		err := dbutils.Walk(v, func(cKey, _ []byte) error {
+		innerErr := dbutils.Walk(v, func(cKey, _ []byte) error {
 			compKey, _ := dbutils.CompositeKeySuffix(cKey, timestamp)
 			keysToRemove.StorageHistoryKeys = append(keysToRemove.StorageHistoryKeys, compKey)
 			return nil
 		})
-		if err != nil {
-			return false, err
+		if innerErr != nil {
+			return false, innerErr
 		}
 		return true, nil
 	})

@@ -299,8 +299,8 @@ func (m *mutation) DeleteTimestamp(timestamp uint64) error {
 
 	if debug.IsThinHistory() {
 		innerErr := dbutils.Walk(changedAccounts, func(kk, _ []byte) error {
-			indexBytes, err := m.getNoLock(dbutils.AccountsHistoryBucket, kk)
-			if err != nil {
+			indexBytes, getErr := m.getNoLock(dbutils.AccountsHistoryBucket, kk)
+			if getErr != nil {
 				return nil
 			}
 			var (
@@ -326,8 +326,8 @@ func (m *mutation) DeleteTimestamp(timestamp uint64) error {
 		m.puts.DeleteStr(string(dbutils.AccountChangeSetBucket), changeSetKey)
 
 		innerErr = dbutils.Walk(changedStorage, func(kk, _ []byte) error {
-			indexBytes, err := m.getNoLock(dbutils.StorageHistoryBucket, kk)
-			if err != nil {
+			indexBytes, getErr := m.getNoLock(dbutils.StorageHistoryBucket, kk)
+			if getErr != nil {
 				return nil
 			}
 			var (
