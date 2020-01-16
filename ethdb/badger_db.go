@@ -172,7 +172,7 @@ func (db *BadgerDatabase) Get(bucket, key []byte) ([]byte, error) {
 func (db *BadgerDatabase) PutS(hBucket, key, value []byte, timestamp uint64, changeSetBucketOnly bool) error {
 	composite, encodedTS := dbutils.CompositeKeySuffix(key, timestamp)
 	hKey := bucketKey(hBucket, composite)
-	changeSetKey := bucketKey(dbutils.ChangeSetBucket, dbutils.CompositeChangeSetKey(encodedTS, hBucket))
+	changeSetKey := bucketKey(dbutils.ChangeSetByIndexBucket(hBucket), encodedTS)
 
 	return db.db.Update(func(tx *badger.Txn) error {
 		if !changeSetBucketOnly {
