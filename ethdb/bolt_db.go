@@ -623,35 +623,35 @@ func (db *BoltDatabase) Delete(bucket, key []byte) error {
 func (db *BoltDatabase) DeleteTimestamp(timestamp uint64) error {
 	encodedTS := dbutils.EncodeTimestamp(timestamp)
 	return db.db.Update(func(tx *bolt.Tx) error {
-			removeChangeSetAndHistory:=func(changeSetBucket[]byte, historyBucket []byte) error{
-				sb := tx.Bucket(changeSetBucket)
-				if sb == nil {
-					return nil
-				}
+		removeChangeSetAndHistory := func(changeSetBucket []byte, historyBucket []byte) error {
+			sb := tx.Bucket(changeSetBucket)
+			if sb == nil {
+				return nil
+			}
 
-				v,_:=sb.Get(encodedTS)
-				if len(v) == 0 {
-					return ErrKeyNotFound
-				}
-				hb := tx.Bucket(historyBucket)
-				if hb == nil {
-					return nil
-				}
-				err := dbutils.Walk(v, func(kk, _ []byte) error {
-					kk = append(kk, encodedTS...)
-					return hb.Delete(kk)
-				})
-				if err != nil {
-					return err
-				}
-				return sb.Delete(encodedTS)
+			v, _ := sb.Get(encodedTS)
+			if len(v) == 0 {
+				return ErrKeyNotFound
 			}
-			innerErr:=removeChangeSetAndHistory(dbutils.AccountChangeSetBucket, dbutils.AccountsHistoryBucket)
-			if innerErr!=nil {
-				return innerErr
+			hb := tx.Bucket(historyBucket)
+			if hb == nil {
+				return nil
 			}
-			return removeChangeSetAndHistory(dbutils.StorageChangeSetBucket, dbutils.StorageHistoryBucket)
-		})
+			err := dbutils.Walk(v, func(kk, _ []byte) error {
+				kk = append(kk, encodedTS...)
+				return hb.Delete(kk)
+			})
+			if err != nil {
+				return err
+			}
+			return sb.Delete(encodedTS)
+		}
+		innerErr := removeChangeSetAndHistory(dbutils.AccountChangeSetBucket, dbutils.AccountsHistoryBucket)
+		if innerErr != nil {
+			return innerErr
+		}
+		return removeChangeSetAndHistory(dbutils.StorageChangeSetBucket, dbutils.StorageHistoryBucket)
+	})
 }
 
 func (db *BoltDatabase) DeleteBucket(bucket []byte) error {
@@ -698,10 +698,10 @@ func (db *BoltDatabase) DB() *bolt.DB {
 
 func (db *BoltDatabase) NewBatch() DbWithPendingMutations {
 	m := &mutation{
-		db:               db,
-		puts:             newPuts(),
-		accountChangeSetByBlock:make(map[uint64]*dbutils.ChangeSet),
-		storageChangeSetByBlock:make(map[uint64]*dbutils.ChangeSet),
+		db:                      db,
+		puts:                    newPuts(),
+		accountChangeSetByBlock: make(map[uint64]*dbutils.ChangeSet),
+		storageChangeSetByBlock: make(map[uint64]*dbutils.ChangeSet),
 	}
 	return m
 }

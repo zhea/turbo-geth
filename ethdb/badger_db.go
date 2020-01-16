@@ -419,11 +419,10 @@ func (db *BadgerDatabase) RewindData(timestampSrc, timestampDst uint64, df func(
 
 func (db *BadgerDatabase) NewBatch() DbWithPendingMutations {
 	m := &mutation{
-		db:               db,
-		puts:             newPuts(),
-		accountChangeSetByBlock:make(map[uint64]*dbutils.ChangeSet),
-		storageChangeSetByBlock:make(map[uint64]*dbutils.ChangeSet),
-
+		db:                      db,
+		puts:                    newPuts(),
+		accountChangeSetByBlock: make(map[uint64]*dbutils.ChangeSet),
+		storageChangeSetByBlock: make(map[uint64]*dbutils.ChangeSet),
 	}
 	return m
 }

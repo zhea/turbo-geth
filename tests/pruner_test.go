@@ -659,7 +659,6 @@ func getStat(db ethdb.Database) (stateStats, error) {
 		}
 		stat.AccountSuffixRecordsByTimestamp[timestamp] = uint32(dbutils.Len(v))
 
-
 		innerErr := dbutils.Walk(v, func(k, _ []byte) error {
 			compKey, _ := dbutils.CompositeKeySuffix(k, timestamp)
 			_, err := db.Get(dbutils.AccountsHistoryBucket, compKey)
@@ -670,7 +669,7 @@ func getStat(db ethdb.Database) (stateStats, error) {
 			stat.NumOfChangesInAccountsHistory++
 			return nil
 		})
-		if innerErr!=nil {
+		if innerErr != nil {
 			return false, innerErr
 		}
 
