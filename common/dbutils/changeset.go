@@ -18,7 +18,7 @@ type Change struct {
 	Value []byte
 }
 
-// ChangeSet is a map with keys of the same size.
+// AccountChangeSet is a map with keys of the same size.
 // Both keys and values are byte strings.
 type ChangeSet struct {
 	// Invariant: all keys are of the same size.
@@ -43,7 +43,7 @@ func (s *ChangeSet) Less(i, j int) bool {
 // END sort.Interface
 
 /*
-ChangeSet is serialized in the following manner in order to facilitate binary search:
+AccountChangeSet is serialized in the following manner in order to facilitate binary search:
 1. The number of keys N (uint32, 4 bytes).
 2. The key size M (uint32, 4 bytes).
 3. Contiguous array of keys (N*M bytes).
@@ -55,7 +55,7 @@ len(val0), len(val0)+len(val1), ..., len(val0)+len(val1)+...+len(val_{N-1})
 uint32 integers are serialized as big-endian.
 */
 
-// Encode sorts a ChangeSet by key and then serializes it.
+// Encode sorts a AccountChangeSet by key and then serializes it.
 func (s *ChangeSet) Encode() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	intArr := make([]byte, 4)
@@ -112,10 +112,10 @@ func (s *ChangeSet) checkKeySize(key []byte) error {
 		return nil
 	}
 
-	return fmt.Errorf("wrong key size in ChangeSet: expected %d, actual %d", s.KeySize(), len(key))
+	return fmt.Errorf("wrong key size in AccountChangeSet: expected %d, actual %d", s.KeySize(), len(key))
 }
 
-// Add adds a new entry to the ChangeSet.
+// Add adds a new entry to the AccountChangeSet.
 // One must not add an existing key
 // and may add keys only of the same size.
 func (s *ChangeSet) Add(key []byte, value []byte) error {
